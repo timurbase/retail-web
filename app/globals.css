@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Class-based dark mode — `.dark` on <html> activates `dark:` variants. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ============================================
    RetailFlow AI — Design Tokens (DESIGN.md)
    Government-Adjacent Authority direction
@@ -8,6 +11,9 @@
 @theme {
   /* Navy — brand */
   --color-navy-50:  #EFF6FF;
+  --color-navy-200: #BFDBFE;
+  --color-navy-300: #93C5FD;
+  --color-navy-400: #60A5FA;
   --color-navy-500: #3B82F6;
   --color-navy-600: #1E5BBF;
   --color-navy-700: #0B3D91;
@@ -26,16 +32,25 @@
 
   /* Emerald — validated, success */
   --color-emerald-50:  #ECFDF5;
+  --color-emerald-200: #A7F3D0;
+  --color-emerald-300: #6EE7B7;
+  --color-emerald-400: #34D399;
   --color-emerald-500: #10B981;
   --color-emerald-600: #059669;
   --color-emerald-700: #047857;
 
   /* Amber — confidence mid */
   --color-amber-50:  #FFFBEB;
+  --color-amber-200: #FDE68A;
+  --color-amber-300: #FCD34D;
+  --color-amber-400: #FBBF24;
   --color-amber-600: #D97706;
 
   /* Red — confidence low / error */
   --color-red-50:  #FEF2F2;
+  --color-red-200: #FECACA;
+  --color-red-300: #FCA5A5;
+  --color-red-400: #F87171;
   --color-red-600: #DC2626;
   --color-red-700: #B91C1C;
 
@@ -70,6 +85,12 @@
   --color-ink-900: #F1F5F9;
   --color-border:        #334155;
   --color-border-strong: #475569;
+
+  /* Tinted backgrounds — dark-mode tints (translucent so they blend with surface) */
+  --color-navy-50:    rgba(59, 130, 246, 0.16);
+  --color-emerald-50: rgba(16, 185, 129, 0.14);
+  --color-amber-50:   rgba(217, 119, 6, 0.16);
+  --color-red-50:     rgba(220, 38, 38, 0.16);
 }
 
 html {
@@ -100,3 +121,21 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--color-ink-300); border-radius: 5px; border: 2px solid var(--color-surface); }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-ink-400); }
+
+/* AI Helper — subtle pulse on the bubble icon. Slow, every 4s. */
+@keyframes ai-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.12); opacity: 0.85; }
+}
+.animate-ai-pulse {
+  animation: ai-pulse 4s ease-in-out infinite;
+}
+
+/* AI Helper panel — slide-up entry */
+@keyframes ai-panel-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-ai-panel-in {
+  animation: ai-panel-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
