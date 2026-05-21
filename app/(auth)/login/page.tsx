@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
 import { Alert } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/toast";
 
 type Step = "phone" | "otp";
 
@@ -29,6 +30,7 @@ function digitsOnly(raw: string): string {
 
 export default function LoginPage() {
   const router = useRouter();
+  const { info } = useToast();
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
@@ -101,7 +103,10 @@ export default function LoginPage() {
   }
 
   function handleEimzo() {
-    alert("E-IMZO bilan kirish tez orada ishga tushiriladi.");
+    info(
+      "E-IMZO integratsiyasi tayyorlanmoqda",
+      "Yangilanish haqida xabar olish uchun email manzilingizni qoldiring."
+    );
   }
 
   return (
@@ -175,6 +180,15 @@ export default function LoginPage() {
                 )}
               </Button>
 
+              <div className="text-center">
+                <Link
+                  href="/forgot-password"
+                  className="text-[13px] font-medium text-navy-700 dark:text-navy-300 hover:text-navy-600 dark:text-navy-400 hover:underline"
+                >
+                  Parolni unutdingizmi?
+                </Link>
+              </div>
+
               {/* Divider */}
               <div className="relative py-1">
                 <div className="absolute inset-0 flex items-center">
@@ -193,7 +207,7 @@ export default function LoginPage() {
                 onClick={handleEimzo}
                 className="h-11 w-full text-[14px]"
               >
-                <ShieldCheck className="size-4 text-navy-700" />
+                <ShieldCheck className="size-4 text-navy-700 dark:text-navy-300" />
                 E-IMZO bilan kirish
               </Button>
             </form>
@@ -223,7 +237,7 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={handleResend}
-                      className="font-semibold text-navy-700 hover:text-navy-600"
+                      className="font-semibold text-navy-700 dark:text-navy-300 hover:text-navy-600 dark:text-navy-400"
                     >
                       Qayta yuborish
                     </button>
@@ -267,7 +281,7 @@ export default function LoginPage() {
         Hisob yo'qmi?{" "}
         <Link
           href="/register"
-          className="font-semibold text-navy-700 hover:text-navy-600"
+          className="font-semibold text-navy-700 dark:text-navy-300 hover:text-navy-600 dark:text-navy-400"
         >
           Bepul ro'yxatdan o'tish →
         </Link>

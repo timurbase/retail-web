@@ -272,7 +272,7 @@ export default function RegisterPage() {
     setTimeout(() => {
       setCreating(false);
       setSuccess(true);
-      setTimeout(() => router.push("/dashboard"), 1500);
+      setTimeout(() => router.push("/onboarding"), 1500);
     }, 800);
   }
 
@@ -289,7 +289,7 @@ export default function RegisterPage() {
         <Card className="shadow-md">
           <div className="flex flex-col items-center px-8 py-12 text-center">
             <div className="grid size-14 place-items-center rounded-full bg-emerald-50">
-              <CheckCircle2 className="size-8 text-emerald-600" />
+              <CheckCircle2 className="size-8 text-emerald-600 dark:text-emerald-400" />
             </div>
             <h2 className="mt-5 text-xl font-bold tracking-tight text-ink-900">
               Korxonangiz ro'yxatdan o'tdi!
@@ -393,7 +393,7 @@ export default function RegisterPage() {
 
       <p className="mt-6 text-center text-[13px] text-ink-600">
         Hisobingiz bormi?{" "}
-        <Link href="/login" className="font-semibold text-navy-700 hover:text-navy-600">
+        <Link href="/login" className="font-semibold text-navy-700 dark:text-navy-300 hover:text-navy-600 dark:text-navy-400">
           Kirish →
         </Link>
       </p>
@@ -426,7 +426,7 @@ function ProgressBar({ current }: { current: 1 | 2 | 3 | 4 }) {
                 <span
                   className={cn(
                     "hidden text-[12px] font-semibold sm:inline",
-                    isCurrent ? "text-ink-900" : isDone ? "text-emerald-700" : "text-ink-400"
+                    isCurrent ? "text-ink-900" : isDone ? "text-emerald-700 dark:text-emerald-300" : "text-ink-400"
                   )}
                 >
                   {s.title}
@@ -597,8 +597,8 @@ function Step2({
       {korxona && (
         <div className="overflow-hidden rounded-md border border-emerald-600/40 bg-emerald-50">
           <div className="flex items-center gap-2 border-b border-emerald-600/30 bg-emerald-50 px-4 py-2.5">
-            <Sparkles className="size-4 text-emerald-700" />
-            <span className="text-[12px] font-semibold uppercase tracking-wider text-emerald-700">
+            <Sparkles className="size-4 text-emerald-700 dark:text-emerald-300" />
+            <span className="text-[12px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
               Soliq.uz dan topildi
             </span>
           </div>
@@ -607,7 +607,7 @@ function Step2({
             <KvRow
               label="Holati"
               value={
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-600 bg-white px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-600 bg-white px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
                   <span className="size-1.5 rounded-full bg-emerald-600" />
                   {korxona.holati}
                 </span>
@@ -738,7 +738,7 @@ function Step3({
 
       <div className="rounded-md border border-border bg-ink-100/50 p-4">
         <div className="mb-3 flex items-center gap-2">
-          <MapPin className="size-4 text-navy-700" />
+          <MapPin className="size-4 text-navy-700 dark:text-navy-300" />
           <span className="text-[12px] font-semibold uppercase tracking-wider text-ink-700">
             Manzil
           </span>
@@ -853,7 +853,7 @@ function Step4({
             <button
               type="button"
               onClick={onResend}
-              className="font-semibold text-navy-700 hover:text-navy-600"
+              className="font-semibold text-navy-700 dark:text-navy-300 hover:text-navy-600 dark:text-navy-400"
             >
               Qayta yuborish
             </button>
@@ -863,11 +863,11 @@ function Step4({
 
       <Alert variant="info">
         Hisobni yaratish bilan siz{" "}
-        <Link href="/terms" className="font-semibold underline">
+        <Link href="/shartlar" className="font-semibold underline">
           foydalanish shartlari
         </Link>
         ga va{" "}
-        <Link href="/privacy" className="font-semibold underline">
+        <Link href="/maxfiylik" className="font-semibold underline">
           maxfiylik siyosati
         </Link>
         ga rozilik bildirasiz.
