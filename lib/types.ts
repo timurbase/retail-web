@@ -133,9 +133,22 @@ export interface AuditEntry {
   timestamp: string;
   user: { id: string; name: string; role: UserRole };
   action: AuditAction;
-  objectType: "document" | "row" | "product" | "supplier" | "user" | "insight" | "integration" | "auth" | "system";
+  objectType: "document" | "row" | "product" | "supplier" | "user" | "insight" | "integration" | "auth" | "system" | "company";
   objectId: string;
   objectLabel?: string;
   details?: string;
   ip: string;
+}
+
+export interface CompanyInfo {
+  storeId: string;
+  stir: string;
+  stirVerified: boolean;
+  name: string;
+  activity: string;
+  address: string;
+  director: string;
+  phone: string;
+  email: string;
+  website: string;
 }

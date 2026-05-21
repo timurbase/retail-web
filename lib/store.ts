@@ -17,6 +17,7 @@ import type {
   User,
   AuditEntry,
   AuditAction,
+  CompanyInfo,
 } from "./types";
 import {
   mockDocuments,
@@ -99,6 +100,19 @@ const seedUsers: User[] = [
   },
 ];
 
+const seedCompany: CompanyInfo = {
+  storeId: STORE_ID,
+  stir: "301234567",
+  stirVerified: true,
+  name: "Karimov MChJ",
+  activity: "Chakana savdo (47.11 — Oziq-ovqat)",
+  address: "Toshkent shahar, Chilonzor tumani, Bunyodkor ko'chasi 1A",
+  director: "Karimov Aziz Salimovich",
+  phone: "+998 90 123 45 67",
+  email: "aziz@karimov-mchj.uz",
+  website: "karimov-mchj.uz",
+};
+
 const seedAudit: AuditEntry[] = [
   {
     id: "audit_seed_1",
@@ -137,6 +151,7 @@ export interface RetailStore {
   insights: DailyInsight[];
   users: User[];
   audit: AuditEntry[];
+  company: CompanyInfo;
 }
 
 function createStore(): RetailStore {
@@ -147,6 +162,7 @@ function createStore(): RetailStore {
     insights: structuredClone(mockInsights),
     users: structuredClone(seedUsers),
     audit: structuredClone(seedAudit),
+    company: structuredClone(seedCompany),
   };
 }
 
@@ -237,9 +253,100 @@ export function getAuditLog(limit = 100): AuditEntry[] {
   return store.audit.slice(0, limit);
 }
 
+export function getCompany(): CompanyInfo {
+  return store.company;
+}
+
+export function updateCompany(
+  patch: Partial<Omit<CompanyInfo, "storeId">>
+): CompanyInfo {
+  const c = store.company;
+  const changes: string[] = [];
+  for (const [k, v] of Object.entries(patch)) {
+    if ((c as any)[k] !== v) {
+      changes.push(`${k}: ${(c as any)[k]} → ${v}`);
+      (c as any)[k] = v;
+    }
+  }
+  logAudit(
+    "update",
+    "company",
+    STORE_ID,
+    c.name,
+    changes.join("; ") || "tahrirlandi"
+  );
+  return c;
+}
+
 // ============================================
 // WRITE — Documents
 // ============================================
+
+export interface ManualDocRowInput {
+  rawName: string;
+  mxik: string | null;
+  unit: string;
+  quantity: number;
+  price: number;
+  mappedProductId?: string | null;
+}
+
+export interface ManualDocInput {
+  supplierId: string;
+  number: string;
+  date: string; // ISO
+  rows: ManualDocRowInput[];
+}
+
+export function createManualDocument(input: ManualDocInput): RetailDocument | null {
+  const supplier = store.suppliers.find((s) => s.id === input.supplierId);
+  if (!supplier) return null;
+
+  const rows: ProductRow[] = input.rows.map((r, i) => {
+    const mxik: MxikSuggestion | null = r.mxik
+      ? { code: r.mxik, name: r.rawName, confidence: 1.0 }
+      : null;
+    return {
+      id: uid(`row_${i}`),
+      rawName: r.rawName,
+      mappedName: r.rawName,
+      mappedProductId: r.mappedProductId ?? null,
+      mxik,
+      unit: r.unit,
+      quantity: r.quantity,
+      price: r.price,
+      total: r.quantity * r.price,
+      confidence: 1.0,
+      status: "matched",
+    };
+  });
+
+  const totalAmount = rows.reduce((sum, r) => sum + r.total, 0);
+  const doc: RetailDocument = {
+    id: uid("doc"),
+    storeId: STORE_ID,
+    orgId: null,
+    number: input.number,
+    source: "manual",
+    supplier,
+    date: input.date,
+    totalAmount,
+    status: "review",
+    reviewCount: 0,
+    createdAt: new Date().toISOString(),
+    rows,
+  };
+
+  store.documents.unshift(doc);
+  logAudit(
+    "create",
+    "document",
+    doc.id,
+    `Hujjat №${doc.number}`,
+    `Qo'lda yaratildi · ${supplier.name} · ${rows.length} mahsulot`
+  );
+  return doc;
+}
 
 export function deleteDocument(id: string): boolean {
   const idx = store.documents.findIndex((d) => d.id === id);
@@ -391,6 +498,38 @@ export function deleteProduct(id: string): boolean {
   return true;
 }
 
+export type StockMovementKind = "kirim" | "chiqim" | "inventarizatsiya";
+
+export function adjustStock(
+  id: string,
+  kind: StockMovementKind,
+  qty: number,
+  reason?: string
+): Product | null {
+  const p = store.products.find((x) => x.id === id);
+  if (!p) return null;
+  const before = p.currentStock;
+  let after: number;
+  if (kind === "kirim") after = before + qty;
+  else if (kind === "chiqim") after = Math.max(0, before - qty);
+  else after = qty; // inventarizatsiya: set to exact value
+  p.currentStock = after;
+  if (kind === "kirim") {
+    p.lastReceivedAt = new Date().toISOString();
+  }
+  const kindLabel =
+    kind === "kirim"
+      ? "Qo'lda kirim"
+      : kind === "chiqim"
+      ? "Qo'lda chiqim"
+      : "Inventarizatsiya";
+  const details = `${kindLabel}: ${before} → ${after} ${p.unit}${
+    reason ? ` · ${reason}` : ""
+  }`;
+  logAudit("update", "product", id, p.name, details);
+  return p;
+}
+
 // ============================================
 // WRITE — Suppliers
 // ============================================
@@ -498,6 +637,23 @@ export function actOnInsight(id: string): boolean {
   ins.dismissed = true;
   logAudit("update", "insight", id, ins.title, `Tavsiyaga amal qilindi: ${ins.suggestedAction?.label ?? "—"}`);
   return true;
+}
+
+// ============================================
+// WRITE — Integrations (config-only, no entity)
+// ============================================
+
+/**
+ * Integrations are a static UI config today, but every mutation
+ * (configure / disconnect / manual sync) still needs to land in the audit log.
+ */
+export function logIntegrationEvent(
+  action: AuditAction,
+  integrationId: string,
+  integrationLabel: string,
+  details?: string
+): void {
+  logAudit(action, "integration", integrationId, integrationLabel, details);
 }
 
 export function dismissAllInsights(): number {

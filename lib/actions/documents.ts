@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import * as store from "../store";
 import type { MxikSuggestion } from "../types";
+import type { ManualDocInput } from "../store";
 
 const REVALIDATE_PATHS = [
   "/dashboard",
@@ -71,4 +72,10 @@ export async function bulkApproveHighConfidenceAction(docId: string) {
   const count = store.bulkApproveHighConfidence(docId);
   revalidateAll(docId);
   return { ok: true, count };
+}
+
+export async function createManualDocumentAction(input: ManualDocInput) {
+  const doc = store.createManualDocument(input);
+  revalidateAll(doc?.id);
+  return { ok: !!doc, document: doc };
 }

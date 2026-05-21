@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import * as store from "../store";
 import type { Product } from "../types";
+import type { StockMovementKind } from "../store";
 
 function revalidate() {
   revalidatePath("/nomenklatura");
@@ -33,4 +34,15 @@ export async function deleteProductAction(id: string) {
   const ok = store.deleteProduct(id);
   revalidate();
   return { ok };
+}
+
+export async function adjustStockAction(
+  id: string,
+  kind: StockMovementKind,
+  qty: number,
+  reason?: string
+) {
+  const p = store.adjustStock(id, kind, qty, reason);
+  revalidate();
+  return { ok: !!p, product: p };
 }
