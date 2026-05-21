@@ -38,10 +38,10 @@ export function MarketingFooter() {
               Kompaniya
             </div>
             <ul className="space-y-2 text-[13px]">
-              <li><Link href="#" className="text-white/70 hover:text-white">Biz haqimizda</Link></li>
-              <li><Link href="#" className="text-white/70 hover:text-white">Blog</Link></li>
-              <li><Link href="#" className="text-white/70 hover:text-white">Yangiliklar</Link></li>
-              <li><Link href="#bog-lanish" className="text-white/70 hover:text-white">Bog'lanish</Link></li>
+              <li><Link href="/about" className="text-white/70 hover:text-white">Biz haqimizda</Link></li>
+              <li><Link href="/blog" className="text-white/70 hover:text-white">Blog</Link></li>
+              <li><Link href="/blog" className="text-white/70 hover:text-white">Yangiliklar</Link></li>
+              <li><Link href="/bog-lanish" className="text-white/70 hover:text-white">Bog&apos;lanish</Link></li>
             </ul>
           </div>
 
@@ -71,9 +71,9 @@ export function MarketingFooter() {
             © 2026 RetailFlow AI · Barcha huquqlar himoyalangan
           </div>
           <div className="flex gap-4 text-[12px] text-white/60">
-            <Link href="#" className="hover:text-white">Maxfiylik siyosati</Link>
-            <Link href="#" className="hover:text-white">Foydalanish shartlari</Link>
-            <Link href="#" className="hover:text-white">Oferta</Link>
+            <Link href="/maxfiylik" className="hover:text-white">Maxfiylik siyosati</Link>
+            <Link href="/shartlar" className="hover:text-white">Foydalanish shartlari</Link>
+            <Link href="/oferta" className="hover:text-white">Oferta</Link>
           </div>
         </div>
       </div>
