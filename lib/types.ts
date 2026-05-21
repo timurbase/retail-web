@@ -102,7 +102,24 @@ export interface DailyInsight {
   acted?: boolean;
 }
 
-export type UserRole = "admin" | "omborchi" | "buxgalter" | "kassir" | "auditor" | "firma";
+export type UserRole =
+  | "admin"
+  | "omborchi"
+  | "buxgalter"
+  | "kassir"
+  | "auditor"
+  | "firma"
+  // Supplier (ta'minotchi) side
+  | "supplier_admin"
+  | "supplier_sales"
+  | "supplier_logistics"
+  | "supplier_buxgalter"
+  // Soliq (tax authority) side
+  | "soliq_inspector"
+  | "soliq_admin";
+
+// Top-level role for login/registration entry point
+export type Role = "store" | "supplier" | "soliq";
 
 export interface User {
   id: string;
@@ -133,7 +150,23 @@ export interface AuditEntry {
   timestamp: string;
   user: { id: string; name: string; role: UserRole };
   action: AuditAction;
-  objectType: "document" | "row" | "product" | "supplier" | "user" | "insight" | "integration" | "auth" | "system" | "company";
+  objectType:
+    | "document"
+    | "row"
+    | "product"
+    | "supplier"
+    | "user"
+    | "insight"
+    | "integration"
+    | "auth"
+    | "system"
+    | "company"
+    // Supplier portal additions
+    | "store"
+    | "invoice"
+    | "payment"
+    | "order"
+    | "route";
   objectId: string;
   objectLabel?: string;
   details?: string;
@@ -151,4 +184,166 @@ export interface CompanyInfo {
   phone: string;
   email: string;
   website: string;
+}
+
+// ============================================================
+// Supplier (ta'minotchi / distribyutor) portal — domain types
+// ============================================================
+
+export interface SupplierCompany {
+  id: string; // sup_company_*
+  name: string; // "Alpha Distribution OOO"
+  stir: string;
+  director: string;
+  phone: string;
+  email: string;
+  address: string;
+  brandType: "local" | "international" | "exclusive";
+  region: string; // primary HQ region
+  fleetSize: number;
+  warehouseAddress: string;
+  createdAt: string;
+}
+
+// "Store" from the SUPPLIER's perspective (their customer)
+export interface SupplierStore {
+  id: string;
+  supplierId: string;
+  storeId: string; // back-ref to store_demo_01 type
+  name: string;
+  stir: string;
+  director: string;
+  phone: string;
+  region: string; // viloyat
+  district: string; // tuman
+  status: "active" | "slow" | "inactive"; // active=<7d, slow=7-14d, inactive=14+d
+  reliabilityScore: number; // 0-10
+  monthlyVolume: number; // so'm
+  totalLifetimeVolume: number;
+  lastOrderAt: string;
+  creditLimit: number;
+  outstandingBalance: number;
+  joinedAt: string;
+  growthPercent: number; // % vs prev month
+}
+
+export type OutgoingInvoiceStatus =
+  | "draft"
+  | "sent"
+  | "received"
+  | "approved"
+  | "preparing"
+  | "delivering"
+  | "delivered"
+  | "paid"
+  | "cancelled";
+
+export interface OutgoingInvoiceItem {
+  productId: string;
+  name: string;
+  mxik: string;
+  unit: string;
+  quantity: number;
+  price: number;
+  total: number;
+}
+
+export interface OutgoingInvoice {
+  id: string;
+  supplierId: string;
+  storeId: string;
+  number: string; // "AD-2026-0042"
+  status: OutgoingInvoiceStatus;
+  items: OutgoingInvoiceItem[];
+  totalAmount: number;
+  sentAt: string;
+  dueDate: string;
+  paidAt: string | null;
+  trackingNote?: string;
+}
+
+export type PaymentStatus = "pending" | "paid" | "overdue" | "partial";
+
+export type PaymentMethod = "click" | "payme" | "bank" | "cash";
+
+export interface PaymentRecord {
+  id: string;
+  invoiceId: string;
+  supplierId: string;
+  storeId: string;
+  invoiceNumber: string;
+  storeName: string;
+  amount: number;
+  paidAmount: number; // for partial payments
+  invoiceDate: string;
+  dueDate: string;
+  paidAt: string | null;
+  status: PaymentStatus;
+  daysOverdue: number;
+  method?: PaymentMethod;
+}
+
+export interface DemandSignal {
+  id: string;
+  productId: string;
+  productName: string;
+  region: string;
+  district?: string;
+  weeklyVolume: number;
+  trendPercent: number;
+  predictedNextWeek: number;
+  hotness: "rising" | "stable" | "falling";
+}
+
+export type SupplierProductCategory =
+  | "ichimliklar"
+  | "oziq-ovqat"
+  | "sigaret"
+  | "maishiy"
+  | "kosmetika"
+  | "boshqa";
+
+export interface SupplierProduct {
+  id: string;
+  supplierId: string;
+  name: string;
+  mxik: string;
+  category: SupplierProductCategory;
+  unit: string;
+  basePrice: number;
+  stock: number;
+  monthlySales: number;
+  trendPercent: number;
+}
+
+export type IncomingOrderStatus = "pending" | "accepted" | "rejected" | "fulfilled";
+
+export interface IncomingOrder {
+  id: string;
+  supplierId: string;
+  storeId: string;
+  storeName: string;
+  number: string; // "ORD-2026-NNNN"
+  items: OutgoingInvoiceItem[];
+  totalAmount: number;
+  requestedAt: string;
+  status: IncomingOrderStatus;
+  rejectionReason?: string;
+}
+
+export interface DeliveryRouteStop {
+  storeId: string;
+  storeName: string;
+  eta: string;
+  status: "pending" | "delivered";
+}
+
+export interface DeliveryRoute {
+  id: string;
+  supplierId: string;
+  driverName: string;
+  vehiclePlate: string;
+  stops: DeliveryRouteStop[];
+  startedAt: string;
+  estimatedCompletion: string;
 }

@@ -39,6 +39,12 @@ const ROLE_LABEL: Record<User["role"], string> = {
   kassir: "Kassir",
   auditor: "Auditor",
   firma: "Firma operatori",
+  supplier_admin: "Ta'minotchi admin",
+  supplier_sales: "Ta'minotchi sotuv",
+  supplier_logistics: "Logistika",
+  supplier_buxgalter: "Ta'minotchi buxgalter",
+  soliq_inspector: "Soliq inspektori",
+  soliq_admin: "Soliq admini",
 };
 
 function getInitials(name: string): string {

@@ -66,6 +66,11 @@ const objectTypeLabels: Record<AuditEntry["objectType"], string> = {
   auth: "Autentifikatsiya",
   system: "Tizim",
   company: "Kompaniya",
+  store: "Do'kon",
+  invoice: "Hujjat (sotuv)",
+  payment: "To'lov",
+  order: "Buyurtma",
+  route: "Yetkazib berish marshruti",
 };
 
 function objectHref(entry: AuditEntry): string | null {

@@ -18,6 +18,17 @@ import type {
   AuditEntry,
   AuditAction,
   CompanyInfo,
+  SupplierCompany,
+  SupplierStore,
+  OutgoingInvoice,
+  OutgoingInvoiceItem,
+  OutgoingInvoiceStatus,
+  PaymentRecord,
+  PaymentMethod,
+  DemandSignal,
+  SupplierProduct,
+  IncomingOrder,
+  DeliveryRoute,
 } from "./types";
 import {
   mockDocuments,
@@ -25,6 +36,17 @@ import {
   mockSuppliers,
   mockInsights,
 } from "./mock-data";
+import {
+  SUPPLIER_ID,
+  seedSupplierCompany,
+  seedSupplierStores,
+  seedSupplierProducts,
+  seedOutgoingInvoices,
+  seedPayments,
+  seedDemandSignals,
+  seedIncomingOrders,
+  seedDeliveryRoutes,
+} from "./supplier-seed";
 
 // ============================================
 // Initial seed for users + audit
@@ -152,6 +174,15 @@ export interface RetailStore {
   users: User[];
   audit: AuditEntry[];
   company: CompanyInfo;
+  // Supplier portal state
+  supplierCompany: SupplierCompany;
+  supplierStores: SupplierStore[];
+  outgoingInvoices: OutgoingInvoice[];
+  payments: PaymentRecord[];
+  demandSignals: DemandSignal[];
+  supplierProducts: SupplierProduct[];
+  incomingOrders: IncomingOrder[];
+  deliveryRoutes: DeliveryRoute[];
 }
 
 function createStore(): RetailStore {
@@ -163,6 +194,14 @@ function createStore(): RetailStore {
     users: structuredClone(seedUsers),
     audit: structuredClone(seedAudit),
     company: structuredClone(seedCompany),
+    supplierCompany: structuredClone(seedSupplierCompany),
+    supplierStores: structuredClone(seedSupplierStores),
+    outgoingInvoices: structuredClone(seedOutgoingInvoices),
+    payments: structuredClone(seedPayments),
+    demandSignals: structuredClone(seedDemandSignals),
+    supplierProducts: structuredClone(seedSupplierProducts),
+    incomingOrders: structuredClone(seedIncomingOrders),
+    deliveryRoutes: structuredClone(seedDeliveryRoutes),
   };
 }
 
@@ -693,4 +732,303 @@ export function getProductStats() {
   const ok = products.filter((p) => p.currentStock > p.minStock).length;
   const withMxik = products.filter((p) => !!p.mxik).length;
   return { total: products.length, critical, atMin, ok, withMxik, withoutMxik: products.length - withMxik };
+}
+
+// ============================================================
+// Supplier portal — READ
+// ============================================================
+
+export function getSupplierCompany(): SupplierCompany {
+  return store.supplierCompany;
+}
+
+export function getSupplierStores(): SupplierStore[] {
+  return store.supplierStores;
+}
+
+export function getSupplierStore(id: string): SupplierStore | undefined {
+  return store.supplierStores.find((s) => s.id === id);
+}
+
+export function getOutgoingInvoices(): OutgoingInvoice[] {
+  return store.outgoingInvoices;
+}
+
+export function getOutgoingInvoice(id: string): OutgoingInvoice | undefined {
+  return store.outgoingInvoices.find((i) => i.id === id);
+}
+
+export function getPayments(): PaymentRecord[] {
+  return store.payments;
+}
+
+export function getOverduePayments(): PaymentRecord[] {
+  return store.payments.filter((p) => p.status === "overdue");
+}
+
+export function getDemandSignals(): DemandSignal[] {
+  return store.demandSignals;
+}
+
+export function getSupplierProducts(): SupplierProduct[] {
+  return store.supplierProducts;
+}
+
+export function getSupplierProduct(id: string): SupplierProduct | undefined {
+  return store.supplierProducts.find((p) => p.id === id);
+}
+
+export function getIncomingOrders(): IncomingOrder[] {
+  return store.incomingOrders;
+}
+
+export function getDeliveryRoutes(): DeliveryRoute[] {
+  return store.deliveryRoutes;
+}
+
+export function getSupplierKpi(): {
+  activeStores: number;
+  totalStores: number;
+  todayInvoices: number;
+  outstandingPayments: number;
+  monthlyRevenue: number;
+} {
+  const stores = store.supplierStores;
+  const activeStores = stores.filter((s) => s.status === "active").length;
+  const today = new Date().toISOString().slice(0, 10);
+  const todayInvoices = store.outgoingInvoices.filter((inv) =>
+    inv.sentAt.startsWith(today),
+  ).length;
+  const outstandingPayments = store.payments
+    .filter((p) => p.status === "pending" || p.status === "overdue" || p.status === "partial")
+    .reduce((sum, p) => sum + (p.amount - p.paidAmount), 0);
+  // Approx "monthly revenue" = sum of last 30 days delivered+paid invoices
+  const cutoff = Date.now() - 30 * 86400000;
+  const monthlyRevenue = store.outgoingInvoices
+    .filter((inv) => {
+      if (inv.status !== "delivered" && inv.status !== "paid") return false;
+      return new Date(inv.sentAt).getTime() >= cutoff;
+    })
+    .reduce((sum, inv) => sum + inv.totalAmount, 0);
+  return {
+    activeStores,
+    totalStores: stores.length,
+    todayInvoices,
+    outstandingPayments,
+    monthlyRevenue,
+  };
+}
+
+// ============================================================
+// Supplier portal — WRITE
+// ============================================================
+
+export interface CreateOutgoingInvoiceInput {
+  storeId: string;
+  items: OutgoingInvoiceItem[];
+  dueDate?: string;
+  trackingNote?: string;
+}
+
+export function createOutgoingInvoice(
+  input: CreateOutgoingInvoiceInput,
+): OutgoingInvoice | null {
+  const sup = store.supplierStores.find((s) => s.id === input.storeId);
+  if (!sup) return null;
+  const totalAmount = input.items.reduce((s, it) => s + it.total, 0);
+  const nextNum = store.outgoingInvoices.length + 1;
+  const invoice: OutgoingInvoice = {
+    id: uid("inv"),
+    supplierId: SUPPLIER_ID,
+    storeId: input.storeId,
+    number: `AD-2026-${String(nextNum).padStart(4, "0")}`,
+    status: "sent",
+    items: input.items,
+    totalAmount,
+    sentAt: new Date().toISOString(),
+    dueDate: input.dueDate ?? new Date(Date.now() + 14 * 86400000).toISOString(),
+    paidAt: null,
+    trackingNote: input.trackingNote,
+  };
+  store.outgoingInvoices.unshift(invoice);
+  logAudit(
+    "create",
+    "invoice",
+    invoice.id,
+    invoice.number,
+    `${sup.name} ga yuborildi · ${input.items.length} mahsulot · ${totalAmount.toLocaleString("uz-UZ")} so'm`,
+  );
+  return invoice;
+}
+
+export function markInvoiceDelivered(id: string): boolean {
+  const inv = store.outgoingInvoices.find((i) => i.id === id);
+  if (!inv) return false;
+  inv.status = "delivered";
+  inv.trackingNote = "Yetkazib berildi";
+  logAudit(
+    "update",
+    "invoice",
+    inv.id,
+    inv.number,
+    "Yetkazib berildi deb belgilandi",
+  );
+  return true;
+}
+
+export function markInvoicePaid(id: string, method: PaymentMethod): boolean {
+  const inv = store.outgoingInvoices.find((i) => i.id === id);
+  if (!inv) return false;
+  inv.status = "paid";
+  inv.paidAt = new Date().toISOString();
+  // Create / update payment record
+  const existing = store.payments.find((p) => p.invoiceId === inv.id);
+  const sup = store.supplierStores.find((s) => s.id === inv.storeId);
+  if (existing) {
+    existing.status = "paid";
+    existing.paidAt = inv.paidAt;
+    existing.paidAmount = inv.totalAmount;
+    existing.method = method;
+    existing.daysOverdue = 0;
+  } else {
+    store.payments.unshift({
+      id: uid("pay"),
+      invoiceId: inv.id,
+      supplierId: SUPPLIER_ID,
+      storeId: inv.storeId,
+      invoiceNumber: inv.number,
+      storeName: sup?.name ?? "Noma'lum do'kon",
+      amount: inv.totalAmount,
+      paidAmount: inv.totalAmount,
+      invoiceDate: inv.sentAt,
+      dueDate: inv.dueDate,
+      paidAt: inv.paidAt,
+      status: "paid",
+      daysOverdue: 0,
+      method,
+    });
+  }
+  logAudit(
+    "update",
+    "payment",
+    inv.id,
+    inv.number,
+    `To'lov qabul qilindi (${method}) · ${inv.totalAmount.toLocaleString("uz-UZ")} so'm`,
+  );
+  return true;
+}
+
+export function acceptIncomingOrder(id: string): boolean {
+  const o = store.incomingOrders.find((x) => x.id === id);
+  if (!o) return false;
+  o.status = "accepted";
+  logAudit("update", "order", o.id, o.number, `${o.storeName} buyurtmasi qabul qilindi`);
+  return true;
+}
+
+export function rejectIncomingOrder(id: string, reason: string): boolean {
+  const o = store.incomingOrders.find((x) => x.id === id);
+  if (!o) return false;
+  o.status = "rejected";
+  o.rejectionReason = reason;
+  logAudit(
+    "reject",
+    "order",
+    o.id,
+    o.number,
+    `${o.storeName} buyurtmasi rad etildi: ${reason}`,
+  );
+  return true;
+}
+
+export interface InviteStoreInput {
+  stir: string;
+  phone: string;
+  name: string;
+  region?: string;
+  district?: string;
+  director?: string;
+  creditLimit?: number;
+}
+
+export function inviteStore(input: InviteStoreInput): SupplierStore {
+  const nextNum = store.supplierStores.length + 1;
+  const id = `sup_store_${String(nextNum).padStart(3, "0")}`;
+  const supStore: SupplierStore = {
+    id,
+    supplierId: SUPPLIER_ID,
+    storeId: `store_${String(nextNum).padStart(3, "0")}`,
+    name: input.name,
+    stir: input.stir,
+    director: input.director ?? "—",
+    phone: input.phone,
+    region: input.region ?? "Toshkent shahar",
+    district: input.district ?? "—",
+    status: "active",
+    reliabilityScore: 8.0,
+    monthlyVolume: 0,
+    totalLifetimeVolume: 0,
+    lastOrderAt: new Date().toISOString(),
+    creditLimit: input.creditLimit ?? 10_000_000,
+    outstandingBalance: 0,
+    joinedAt: new Date().toISOString(),
+    growthPercent: 0,
+  };
+  store.supplierStores.unshift(supStore);
+  logAudit(
+    "create",
+    "store",
+    supStore.id,
+    supStore.name,
+    `Yangi do'kon taklif qilindi · STIR ${input.stir} · ${input.phone}`,
+  );
+  return supStore;
+}
+
+export function updateStoreCreditLimit(id: string, newLimit: number): SupplierStore | null {
+  const s = store.supplierStores.find((x) => x.id === id);
+  if (!s) return null;
+  const old = s.creditLimit;
+  s.creditLimit = newLimit;
+  logAudit(
+    "update",
+    "store",
+    s.id,
+    s.name,
+    `Kredit limiti: ${old.toLocaleString("uz-UZ")} → ${newLimit.toLocaleString("uz-UZ")} so'm`,
+  );
+  return s;
+}
+
+export function bulkSendInvoices(inputs: CreateOutgoingInvoiceInput[]): {
+  ok: boolean;
+  count: number;
+  invoices: OutgoingInvoice[];
+} {
+  const created: OutgoingInvoice[] = [];
+  for (const input of inputs) {
+    const inv = createOutgoingInvoice(input);
+    if (inv) created.push(inv);
+  }
+  logAudit(
+    "create",
+    "invoice",
+    "bulk",
+    `${created.length} ta hujjat`,
+    `Bulk yuborish: ${created.length}/${inputs.length} muvaffaqiyatli`,
+  );
+  return { ok: true, count: created.length, invoices: created };
+}
+
+// Used to bridge a supplier-side invoice status update from another flow.
+export function updateInvoiceStatus(
+  id: string,
+  status: OutgoingInvoiceStatus,
+): OutgoingInvoice | null {
+  const inv = store.outgoingInvoices.find((i) => i.id === id);
+  if (!inv) return null;
+  const old = inv.status;
+  inv.status = status;
+  logAudit("update", "invoice", inv.id, inv.number, `Status: ${old} → ${status}`);
+  return inv;
 }

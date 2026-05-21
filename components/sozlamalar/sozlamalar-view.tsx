@@ -702,6 +702,12 @@ const ROLE_LABELS: Record<UserRole, string> = {
   kassir: "Kassir",
   auditor: "Auditor",
   firma: "Firma operatori",
+  supplier_admin: "Ta'minotchi admin",
+  supplier_sales: "Ta'minotchi sotuv",
+  supplier_logistics: "Logistika",
+  supplier_buxgalter: "Ta'minotchi buxgalter",
+  soliq_inspector: "Soliq inspektori",
+  soliq_admin: "Soliq admini",
 };
 
 const ROLE_COLORS: Record<UserRole, string> = {
@@ -711,6 +717,12 @@ const ROLE_COLORS: Record<UserRole, string> = {
   kassir: "bg-amber-50 border-amber-600 text-amber-600 dark:text-amber-300",
   auditor: "bg-ink-100 border-ink-400 text-ink-700",
   firma: "bg-navy-50 border-navy-700 text-navy-700 dark:text-navy-300",
+  supplier_admin: "bg-navy-50 border-navy-700 text-navy-700 dark:text-navy-300",
+  supplier_sales: "bg-emerald-50 border-emerald-600 text-emerald-700 dark:text-emerald-300",
+  supplier_logistics: "bg-amber-50 border-amber-600 text-amber-600 dark:text-amber-300",
+  supplier_buxgalter: "bg-ink-100 border-ink-400 text-ink-700",
+  soliq_inspector: "bg-red-50 border-red-600 text-red-700 dark:text-red-300",
+  soliq_admin: "bg-red-50 border-red-600 text-red-700 dark:text-red-300",
 };
 
 const STATUS_STYLES: Record<
