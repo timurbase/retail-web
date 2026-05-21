@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+/* ============================================
+   RetailFlow AI — Design Tokens (DESIGN.md)
+   Government-Adjacent Authority direction
+   ============================================ */
+
+@theme {
+  /* Navy — brand */
+  --color-navy-50:  #EFF6FF;
+  --color-navy-500: #3B82F6;
+  --color-navy-600: #1E5BBF;
+  --color-navy-700: #0B3D91;
+  --color-navy-800: #0A2E6E;
+  --color-navy-900: #061E47;
+
+  /* Ink — text + neutrals */
+  --color-ink-100: #F1F5F9;
+  --color-ink-200: #E2E8F0;
+  --color-ink-300: #CBD5E1;
+  --color-ink-400: #94A3B8;
+  --color-ink-500: #64748B;
+  --color-ink-600: #475569;
+  --color-ink-700: #1E293B;
+  --color-ink-900: #0F172A;
+
+  /* Emerald — validated, success */
+  --color-emerald-50:  #ECFDF5;
+  --color-emerald-500: #10B981;
+  --color-emerald-600: #059669;
+  --color-emerald-700: #047857;
+
+  /* Amber — confidence mid */
+  --color-amber-50:  #FFFBEB;
+  --color-amber-600: #D97706;
+
+  /* Red — confidence low / error */
+  --color-red-50:  #FEF2F2;
+  --color-red-600: #DC2626;
+  --color-red-700: #B91C1C;
+
+  /* Surfaces */
+  --color-surface:        #F8FAFC;
+  --color-surface-card:   #FFFFFF;
+  --color-border:         #CBD5E1;
+  --color-border-strong:  #94A3B8;
+
+  /* Typography */
+  --font-sans: var(--font-public-sans), -apple-system, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), "Courier New", monospace;
+
+  /* Border radius — formal */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+}
+
+/* Dark mode overrides */
+.dark {
+  --color-surface:       #0B1220;
+  --color-surface-card:  #111A2E;
+  --color-ink-100: #1E293B;
+  --color-ink-200: #334155;
+  --color-ink-300: #475569;
+  --color-ink-400: #64748B;
+  --color-ink-500: #94A3B8;
+  --color-ink-600: #CBD5E1;
+  --color-ink-700: #E2E8F0;
+  --color-ink-900: #F1F5F9;
+  --color-border:        #334155;
+  --color-border-strong: #475569;
+}
+
+html {
+  font-family: var(--font-sans);
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-surface);
+  color: var(--color-ink-900);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tabular nums for mono */
+.font-mono,
+[class*="font-mono"] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-navy-700);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-ink-300); border-radius: 5px; border: 2px solid var(--color-surface); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-ink-400); }
