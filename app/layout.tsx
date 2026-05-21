@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Public_Sans, IBM_Plex_Mono } from "next/font/google";
 import { ToastProvider } from "@/components/ui/toast";
+import { ThemeProvider } from "@/components/theme/theme-provider";
 import "./globals.css";
 
 const publicSans = Public_Sans({
@@ -23,6 +24,16 @@ export const metadata: Metadata = {
     "AI-asosli hujjat avtomatlashtirish va MXIK validatsiya platformasi O'zbekiston chakana savdosi uchun.",
 };
 
+// Inline pre-hydration script to set the theme class on <html> BEFORE the
+// first paint, preventing a flash of light when dark is selected.
+const themeInitScript = `
+try {
+  var t = localStorage.getItem('retailflow.theme') || 'system';
+  var dark = t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  if (dark) document.documentElement.classList.add('dark');
+} catch (e) {}
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -30,9 +41,15 @@ export default function RootLayout({
     <html
       lang="uz"
       className={`${publicSans.variable} ${plexMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-full">
-        <ToastProvider>{children}</ToastProvider>
+        <ThemeProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
