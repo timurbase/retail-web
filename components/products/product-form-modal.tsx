@@ -175,7 +175,7 @@ export function ProductFormModal({
               autoFocus
             />
             {errors.name && (
-              <p className="mt-1 text-[11px] text-red-600">{errors.name}</p>
+              <p className="mt-1 text-[11px] text-red-600 dark:text-red-400">{errors.name}</p>
             )}
           </div>
 
@@ -203,7 +203,7 @@ export function ProductFormModal({
                   onClick={() => {
                     /* MXIK lookup placeholder */
                   }}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 grid size-7 place-items-center rounded-sm text-ink-500 hover:bg-ink-100 hover:text-navy-700"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 grid size-7 place-items-center rounded-sm text-ink-500 hover:bg-ink-100 hover:text-navy-700 dark:text-navy-300"
                   aria-label="MXIK qidirish"
                   tabIndex={-1}
                 >
@@ -211,7 +211,7 @@ export function ProductFormModal({
                 </button>
               </div>
               {errors.mxik && (
-                <p className="mt-1 text-[11px] text-red-600">{errors.mxik}</p>
+                <p className="mt-1 text-[11px] text-red-600 dark:text-red-400">{errors.mxik}</p>
               )}
             </div>
 
@@ -234,7 +234,7 @@ export function ProductFormModal({
                 ))}
               </select>
               {errors.unit && (
-                <p className="mt-1 text-[11px] text-red-600">{errors.unit}</p>
+                <p className="mt-1 text-[11px] text-red-600 dark:text-red-400">{errors.unit}</p>
               )}
             </div>
           </div>
@@ -254,7 +254,7 @@ export function ProductFormModal({
                 disabled={pending}
               />
               {errors.currentStock && (
-                <p className="mt-1 text-[11px] text-red-600">
+                <p className="mt-1 text-[11px] text-red-600 dark:text-red-400">
                   {errors.currentStock}
                 </p>
               )}
@@ -273,7 +273,7 @@ export function ProductFormModal({
                 disabled={pending}
               />
               {errors.minStock && (
-                <p className="mt-1 text-[11px] text-red-600">{errors.minStock}</p>
+                <p className="mt-1 text-[11px] text-red-600 dark:text-red-400">{errors.minStock}</p>
               )}
             </div>
           </div>
@@ -292,7 +292,7 @@ export function ProductFormModal({
               disabled={pending}
             />
             {errors.avgPrice && (
-              <p className="mt-1 text-[11px] text-red-600">{errors.avgPrice}</p>
+              <p className="mt-1 text-[11px] text-red-600 dark:text-red-400">{errors.avgPrice}</p>
             )}
           </div>
         </ModalBody>

@@ -59,7 +59,7 @@ export default async function DocumentDetailPage({ params }: PageProps) {
         </div>
         <div className="flex items-center gap-3">
           {reviewCount > 0 && (
-            <span className="rounded-full border border-amber-600 bg-amber-50 px-3 py-1 text-[12px] font-semibold text-amber-600">
+            <span className="rounded-full border border-amber-600 bg-amber-50 px-3 py-1 text-[12px] font-semibold text-amber-600 dark:text-amber-300">
               ⚠ {reviewCount} ta yozuv tekshirish kerak
             </span>
           )}
@@ -77,7 +77,7 @@ export default async function DocumentDetailPage({ params }: PageProps) {
         {/* Right: AI analysis */}
         <div className="w-1/2 overflow-y-auto bg-surface p-5">
           <div className="mb-3 flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-wider text-ink-700">
-            <Sparkles className="size-3.5 text-emerald-600" />
+            <Sparkles className="size-3.5 text-emerald-600 dark:text-emerald-400" />
             AI tahlil
           </div>
 
@@ -124,7 +124,7 @@ export default async function DocumentDetailPage({ params }: PageProps) {
 
           <div className="mb-3 flex items-center justify-between font-mono text-[11px] font-semibold uppercase tracking-wider text-ink-700">
             <span>Mahsulotlar ({doc.rows.length} ta)</span>
-            <span className="text-emerald-600 normal-case font-sans">
+            <span className="text-emerald-600 dark:text-emerald-400 normal-case font-sans">
               {matchedCount} avto-mos · {approvedCount} tasdiqlangan
             </span>
           </div>

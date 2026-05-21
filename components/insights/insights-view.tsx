@@ -98,10 +98,10 @@ export function InsightsView({ insights }: InsightsViewProps) {
         <div className="mx-auto mb-3 grid size-12 place-items-center rounded-full bg-emerald-600 text-white">
           <Check className="size-6" />
         </div>
-        <h2 className="text-[16px] font-semibold text-emerald-700">
+        <h2 className="text-[16px] font-semibold text-emerald-700 dark:text-emerald-300">
           Hammasi tartibda!
         </h2>
-        <p className="mt-1 text-[13px] text-emerald-700/80">
+        <p className="mt-1 text-[13px] text-emerald-700 dark:text-emerald-300/80">
           Bugun e&apos;tibor talab qiladigan tavsiyalar yo&apos;q.
         </p>
       </div>
@@ -118,14 +118,14 @@ export function InsightsView({ insights }: InsightsViewProps) {
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <h2 className="text-[18px] font-bold tracking-tight text-emerald-700">
+              <h2 className="text-[18px] font-bold tracking-tight text-emerald-700 dark:text-emerald-300">
                 Bugungi xulosa
               </h2>
               <span className="rounded-full bg-emerald-600 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-white">
                 AI
               </span>
             </div>
-            <p className="mt-2 text-[14px] leading-relaxed text-emerald-700">
+            <p className="mt-2 text-[14px] leading-relaxed text-emerald-700 dark:text-emerald-300">
               <span className="font-mono font-semibold">
                 {groups.lowStock.length}
               </span>{" "}
@@ -152,7 +152,7 @@ export function InsightsView({ insights }: InsightsViewProps) {
                 <Check className="size-4" />
                 Hammasiga amal qilish (1-click)
               </Button>
-              <span className="font-mono text-[11px] text-emerald-700/70">
+              <span className="font-mono text-[11px] text-emerald-700 dark:text-emerald-300/70">
                 {groups.lowStock.length + groups.reorders.length} ta buyurtma ·
                 3 ta yetkazib beruvchi
               </span>
@@ -166,7 +166,7 @@ export function InsightsView({ insights }: InsightsViewProps) {
         <section className="mb-8">
           <SectionHeader
             icon={AlertTriangle}
-            iconClass="bg-red-50 text-red-700"
+            iconClass="bg-red-50 text-red-700 dark:text-red-300"
             title="Kritik qoldiqlar"
             count={groups.lowStock.length}
             subtitle="Tugashga 24 soat"
@@ -184,7 +184,7 @@ export function InsightsView({ insights }: InsightsViewProps) {
         <section className="mb-8">
           <SectionHeader
             icon={TrendingUp}
-            iconClass="bg-amber-50 text-amber-600"
+            iconClass="bg-amber-50 text-amber-600 dark:text-amber-300"
             title="Narx o'zgarishlari"
             count={groups.priceSpikes.length}
             subtitle="Bozor monitoring · 14 ta yetkazib beruvchi"
@@ -202,7 +202,7 @@ export function InsightsView({ insights }: InsightsViewProps) {
         <section className="mb-8">
           <SectionHeader
             icon={Repeat}
-            iconClass="bg-navy-50 text-navy-700"
+            iconClass="bg-navy-50 text-navy-700 dark:text-navy-300"
             title="Buyurtma tavsiyalari"
             count={groups.reorders.length}
             subtitle="Iste'mol tezligiga asoslangan"
@@ -220,7 +220,7 @@ export function InsightsView({ insights }: InsightsViewProps) {
         <section className="mb-8">
           <SectionHeader
             icon={Copy}
-            iconClass="bg-amber-50 text-amber-600"
+            iconClass="bg-amber-50 text-amber-600 dark:text-amber-300"
             title="Dublikat shubhalari"
             count={groups.duplicates.length}
             subtitle="Nomenklatura tozaligi"
@@ -238,7 +238,7 @@ export function InsightsView({ insights }: InsightsViewProps) {
         <section className="mb-8">
           <SectionHeader
             icon={AlertTriangle}
-            iconClass="bg-amber-50 text-amber-600"
+            iconClass="bg-amber-50 text-amber-600 dark:text-amber-300"
             title="Yetkazib beruvchi muammolari"
             count={groups.supplierIssues.length}
           />

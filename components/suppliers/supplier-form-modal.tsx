@@ -213,7 +213,7 @@ export function SupplierFormModal({
             <div className="mt-1.5 flex items-center justify-between text-[12px]">
               <span className="text-ink-500">
                 {isEdit ? (
-                  <span className="inline-flex items-center gap-1 font-mono text-emerald-700">
+                  <span className="inline-flex items-center gap-1 font-mono text-emerald-700 dark:text-emerald-300">
                     <ShieldCheck className="size-3.5" />
                     Tekshirilgan
                   </span>
@@ -281,7 +281,7 @@ export function SupplierFormModal({
                 <span
                   className={cn(
                     "text-[13px] font-medium",
-                    verified ? "text-emerald-700" : "text-ink-700"
+                    verified ? "text-emerald-700 dark:text-emerald-300" : "text-ink-700"
                   )}
                 >
                   {verified

@@ -35,12 +35,12 @@ const statusStyles: Record<
   DistributorStore["status"],
   { dot: string; label: string; text: string }
 > = {
-  active: { dot: "bg-emerald-500", label: "Faol", text: "text-emerald-700" },
-  slow: { dot: "bg-amber-500", label: "Sust", text: "text-amber-600" },
+  active: { dot: "bg-emerald-500", label: "Faol", text: "text-emerald-700 dark:text-emerald-300" },
+  slow: { dot: "bg-amber-500", label: "Sust", text: "text-amber-600 dark:text-amber-300" },
   inactive: {
     dot: "bg-red-500",
     label: "14 kun buyurtma yo'q",
-    text: "text-red-700",
+    text: "text-red-700 dark:text-red-300",
   },
 };
 
@@ -105,7 +105,7 @@ function StoreCard({ store }: { store: DistributorStore }) {
             <span
               className={cn(
                 "flex items-center gap-0.5 font-mono text-[10px] font-semibold",
-                isUp ? "text-emerald-700" : "text-red-700"
+                isUp ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"
               )}
             >
               <TrendIcon className="size-2.5" />
@@ -211,7 +211,7 @@ export default function DistributorPage() {
                 <h1 className="text-2xl font-bold tracking-tight text-ink-900">
                   Distribyutor portal
                 </h1>
-                <span className="rounded-full border border-amber-600 bg-amber-50 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-amber-600">
+                <span className="rounded-full border border-amber-600 bg-amber-50 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-300">
                   Mock UI
                 </span>
               </div>
@@ -238,7 +238,7 @@ export default function DistributorPage() {
             <KpiCard
               label="Faol do'konlar"
               value={`${mockDistributorKpi.activeStores} / ${mockDistributorKpi.totalStores}`}
-              valueClassName="text-emerald-700"
+              valueClassName="text-emerald-700 dark:text-emerald-300"
               trend={{
                 value: `${activeStores} faol · ${slowStores} sust · ${inactiveStores} jim`,
                 direction: "up",
@@ -294,7 +294,7 @@ export default function DistributorPage() {
                     <span className="font-mono text-[11px] text-ink-500">
                       Ko'rsatilmoqda: 12 / {mockDistributorKpi.activeStores} ta
                     </span>
-                    <button className="flex items-center gap-1 text-[12px] font-medium text-navy-700 hover:underline">
+                    <button className="flex items-center gap-1 text-[12px] font-medium text-navy-700 dark:text-navy-300 hover:underline">
                       Hammasini ko'rish
                       <ArrowRight className="size-3" />
                     </button>
@@ -309,12 +309,12 @@ export default function DistributorPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-1.5">
-                    <TrendingUp className="size-4 text-emerald-700" />
+                    <TrendingUp className="size-4 text-emerald-700 dark:text-emerald-300" />
                     Bu hafta o'sish
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="font-mono text-3xl font-bold leading-none tracking-tight text-emerald-700">
+                  <div className="font-mono text-3xl font-bold leading-none tracking-tight text-emerald-700 dark:text-emerald-300">
                     +12.4%
                   </div>
                   <p className="mt-2 text-[12px] text-ink-500">
@@ -340,7 +340,7 @@ export default function DistributorPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-1.5">
-                    <AlertTriangle className="size-4 text-amber-600" />
+                    <AlertTriangle className="size-4 text-amber-600 dark:text-amber-300" />
                     E'tibor talab qiladi
                   </CardTitle>
                 </CardHeader>
@@ -352,7 +352,7 @@ export default function DistributorPage() {
                     <p className="mt-0.5 font-mono text-[11px] text-ink-500">
                       14 kun hujjat yo'q
                     </p>
-                    <button className="mt-1 text-[11px] font-medium text-navy-700 hover:underline">
+                    <button className="mt-1 text-[11px] font-medium text-navy-700 dark:text-navy-300 hover:underline">
                       Aloqaga chiqing →
                     </button>
                   </div>
@@ -363,7 +363,7 @@ export default function DistributorPage() {
                     <p className="mt-0.5 font-mono text-[11px] text-ink-500">
                       Narx tahrir kerak — 12 ta SKU
                     </p>
-                    <button className="mt-1 text-[11px] font-medium text-navy-700 hover:underline">
+                    <button className="mt-1 text-[11px] font-medium text-navy-700 dark:text-navy-300 hover:underline">
                       Ko'rib chiqish →
                     </button>
                   </div>
@@ -374,7 +374,7 @@ export default function DistributorPage() {
                     <p className="mt-0.5 font-mono text-[11px] text-ink-500">
                       Kredit limit 80M so'm gacha oshirildi
                     </p>
-                    <button className="mt-1 text-[11px] font-medium text-navy-700 hover:underline">
+                    <button className="mt-1 text-[11px] font-medium text-navy-700 dark:text-navy-300 hover:underline">
                       Tasdiqlash →
                     </button>
                   </div>
@@ -385,20 +385,20 @@ export default function DistributorPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-1.5">
-                    <Sparkles className="size-4 text-emerald-700" />
+                    <Sparkles className="size-4 text-emerald-700 dark:text-emerald-300" />
                     AI tavsiyalar
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="rounded-sm border border-emerald-600/30 bg-emerald-50 px-3 py-2">
-                    <p className="text-[12px] leading-snug text-emerald-700">
+                    <p className="text-[12px] leading-snug text-emerald-700 dark:text-emerald-300">
                       <span className="font-semibold">Mineral suv</span> talab{" "}
                       <span className="font-mono font-semibold">+23%</span> oshmoqda
                       — Toshkent viloyatida.
                     </p>
                   </div>
                   <div className="rounded-sm border border-amber-600/30 bg-amber-50 px-3 py-2">
-                    <p className="text-[12px] leading-snug text-amber-600">
+                    <p className="text-[12px] leading-snug text-amber-600 dark:text-amber-300">
                       <span className="font-semibold">Coca-Cola Zero</span>{" "}
                       <span className="font-mono font-semibold">5 ta</span> do'konda
                       yo'q — yetkazib bering.
@@ -427,7 +427,7 @@ export default function DistributorPage() {
             <Card>
               <CardHeader className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
-                  <RefreshCcw className="size-4 text-navy-700" />
+                  <RefreshCcw className="size-4 text-navy-700 dark:text-navy-300" />
                   Yo'l xaritasi — keyingi sprintlar
                 </CardTitle>
                 <span className="font-mono text-[11px] text-ink-500">
@@ -443,7 +443,7 @@ export default function DistributorPage() {
                         key={f.title}
                         className="relative flex gap-3 rounded-md border border-dashed border-border bg-surface p-4 opacity-80"
                       >
-                        <div className="grid size-8 shrink-0 place-items-center rounded-sm bg-navy-700/10 text-navy-700">
+                        <div className="grid size-8 shrink-0 place-items-center rounded-sm bg-navy-700/10 text-navy-700 dark:text-navy-300">
                           <Icon className="size-4" />
                         </div>
                         <div className="min-w-0 flex-1">

@@ -31,8 +31,8 @@ const avatarPalette: Array<{ bg: string; text: string }> = [
   { bg: "bg-navy-700", text: "text-white" },
   { bg: "bg-emerald-600", text: "text-white" },
   { bg: "bg-amber-600", text: "text-white" },
-  { bg: "bg-navy-50", text: "text-navy-700" },
-  { bg: "bg-emerald-50", text: "text-emerald-700" },
+  { bg: "bg-navy-50", text: "text-navy-700 dark:text-navy-300" },
+  { bg: "bg-emerald-50", text: "text-emerald-700 dark:text-emerald-300" },
   { bg: "bg-ink-700", text: "text-white" },
   { bg: "bg-red-600", text: "text-white" },
   { bg: "bg-ink-100", text: "text-ink-700" },
@@ -246,12 +246,12 @@ function SupplierCard({
               </span>
             </span>
             {supplier.verified ? (
-              <span className="inline-flex items-center gap-0.5 rounded-full border border-emerald-600 bg-emerald-50 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-emerald-700">
+              <span className="inline-flex items-center gap-0.5 rounded-full border border-emerald-600 bg-emerald-50 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
                 <Check className="size-2.5" strokeWidth={3} />
                 tasdiq
               </span>
             ) : (
-              <span className="inline-flex items-center gap-0.5 rounded-full border border-amber-600 bg-amber-50 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-amber-600">
+              <span className="inline-flex items-center gap-0.5 rounded-full border border-amber-600 bg-amber-50 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-amber-600 dark:text-amber-300">
                 <ShieldAlert className="size-2.5" strokeWidth={3} />
                 tekshir
               </span>
@@ -264,9 +264,9 @@ function SupplierCard({
       <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
         <div className="text-[11px] text-ink-500">
           {supplier.verified ? (
-            <span className="text-emerald-700">Soliq.uz da faol</span>
+            <span className="text-emerald-700 dark:text-emerald-300">Soliq.uz da faol</span>
           ) : (
-            <span className="text-amber-600">Qo&apos;lda kiritilgan</span>
+            <span className="text-amber-600 dark:text-amber-300">Qo&apos;lda kiritilgan</span>
           )}
         </div>
         <ChevronRight className="size-4 text-ink-400" />

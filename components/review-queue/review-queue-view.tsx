@@ -86,7 +86,7 @@ export function ReviewQueueView({ documents }: ReviewQueueViewProps) {
     return (
       <Card>
         <CardContent className="p-10 text-center">
-          <div className="mx-auto mb-3 grid size-12 place-items-center rounded-full bg-emerald-50 text-emerald-600">
+          <div className="mx-auto mb-3 grid size-12 place-items-center rounded-full bg-emerald-50 text-emerald-600 dark:text-emerald-400">
             <CheckCircle2 className="size-6" />
           </div>
           <div className="text-[15px] font-semibold text-ink-900">
@@ -117,7 +117,7 @@ export function ReviewQueueView({ documents }: ReviewQueueViewProps) {
             type="button"
             onClick={handleBulkAutoApprove}
             disabled={pending}
-            className="inline-flex items-center gap-2 rounded-full border border-emerald-600 bg-emerald-50 px-3 py-1.5 text-[12px] font-semibold text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-full border border-emerald-600 bg-emerald-50 px-3 py-1.5 text-[12px] font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Sparkles className="size-3.5" />
             Bulk action: Hammasini yashil-confidence avto-tasdiq (

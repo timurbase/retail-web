@@ -41,7 +41,7 @@ export default function YetkazibBeruvchilarPage() {
             <KpiCard
               label="Aktiv (oxirgi 30 kun)"
               value={formatNumber(activeLast30)}
-              valueClassName="text-emerald-600"
+              valueClassName="text-emerald-600 dark:text-emerald-400"
               trend={{
                 value: `${total > 0 ? Math.round((activeLast30 / total) * 100) : 0}% baza`,
                 direction: "up",
@@ -51,7 +51,7 @@ export default function YetkazibBeruvchilarPage() {
               label="STIR tasdiqlanmagan"
               value={formatNumber(unverified)}
               valueClassName={
-                unverified > 0 ? "text-amber-600" : "text-emerald-600"
+                unverified > 0 ? "text-amber-600 dark:text-amber-300" : "text-emerald-600 dark:text-emerald-400"
               }
               trend={
                 unverified > 0
@@ -62,7 +62,7 @@ export default function YetkazibBeruvchilarPage() {
             <KpiCard
               label="Tasdiqlangan ulushi"
               value={`${Math.round(verifiedRate * 100)}%`}
-              valueClassName="text-emerald-600"
+              valueClassName="text-emerald-600 dark:text-emerald-400"
               trend={{ value: "Soliq.uz bo'yicha", direction: "up" }}
             />
           </div>

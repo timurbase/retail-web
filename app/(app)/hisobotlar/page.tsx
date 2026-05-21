@@ -134,13 +134,13 @@ export default function HisobotlarPage() {
             <KpiCard
               label="Aniqlik"
               value="87.4%"
-              valueClassName="text-emerald-600"
+              valueClassName="text-emerald-600 dark:text-emerald-400"
               trend={{ value: "+4% o'tgan oyga", direction: "up" }}
             />
             <KpiCard
               label="MXIK xatolar"
               value="23"
-              valueClassName="text-red-700"
+              valueClassName="text-red-700 dark:text-red-300"
               trend={{ value: "-8 o'tgan oyga", direction: "down" }}
             />
             <KpiCard
@@ -265,7 +265,7 @@ export default function HisobotlarPage() {
                 >
                   <div className="absolute inset-3 rounded-full bg-surface-card grid place-items-center">
                     <div className="text-center">
-                      <div className="font-mono text-3xl font-bold text-emerald-700 leading-none">
+                      <div className="font-mono text-3xl font-bold text-emerald-700 dark:text-emerald-300 leading-none">
                         87%
                       </div>
                       <div className="mt-1 text-[10px] uppercase tracking-wider text-ink-500 font-semibold">
@@ -334,7 +334,7 @@ export default function HisobotlarPage() {
                     <span
                       className={cn(
                         "font-mono text-[13px] font-semibold text-right w-24",
-                        op.accuracy >= 0.9 ? "text-emerald-600" : "text-amber-600"
+                        op.accuracy >= 0.9 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-300"
                       )}
                     >
                       {Math.round(op.accuracy * 100)}%
@@ -388,7 +388,7 @@ export default function HisobotlarPage() {
           <Card>
             <CardHeader className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
-                <Sparkles className="size-4 text-emerald-600" />
+                <Sparkles className="size-4 text-emerald-600 dark:text-emerald-400" />
                 AI xarajat tracking
               </CardTitle>
               <span className="font-mono text-[11px] text-ink-500">

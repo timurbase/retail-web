@@ -1,9 +1,9 @@
 import { Topbar } from "@/components/layout/topbar";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { DocListRowMenu } from "@/components/document/doc-list-row-menu";
-import { Plus, FileText, Image as ImageIcon, FileSpreadsheet } from "lucide-react";
-import { getDocuments } from "@/lib/store";
+import { NewDocButton } from "@/components/document/new-doc-button";
+import { FileText, Image as ImageIcon, FileSpreadsheet } from "lucide-react";
+import { getDocuments, getSuppliers } from "@/lib/store";
 import { formatSom, formatDate } from "@/lib/utils";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
@@ -17,10 +17,10 @@ const sourceIcons: Record<string, LucideIcon> = {
 };
 
 const statusStyles: Record<string, string> = {
-  pending: "bg-navy-50 border-navy-700 text-navy-700",
-  review: "bg-amber-50 border-amber-600 text-amber-600",
-  approved: "bg-emerald-50 border-emerald-600 text-emerald-700",
-  rejected: "bg-red-50 border-red-600 text-red-700",
+  pending: "bg-navy-50 border-navy-700 text-navy-700 dark:text-navy-300",
+  review: "bg-amber-50 border-amber-600 text-amber-600 dark:text-amber-300",
+  approved: "bg-emerald-50 border-emerald-600 text-emerald-700 dark:text-emerald-300",
+  rejected: "bg-red-50 border-red-600 text-red-700 dark:text-red-300",
   duplicate: "bg-ink-100 border-ink-400 text-ink-600",
 };
 
@@ -34,6 +34,7 @@ const statusLabel: Record<string, string> = {
 
 export default function HujjatlarPage() {
   const documents = getDocuments();
+  const suppliers = getSuppliers();
 
   return (
     <>
@@ -51,14 +52,7 @@ export default function HujjatlarPage() {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button variant="secondary">
-                <FileSpreadsheet className="size-4" />
-                Excel import
-              </Button>
-              <Button>
-                <Plus className="size-4" />
-                Yangi hujjat
-              </Button>
+              <NewDocButton suppliers={suppliers} />
             </div>
           </div>
 
@@ -80,7 +74,7 @@ export default function HujjatlarPage() {
                         href={`/hujjatlar/${doc.id}`}
                         className="flex flex-1 items-center gap-4 min-w-0 px-5 py-4"
                       >
-                        <div className="grid size-10 shrink-0 place-items-center rounded-md bg-navy-50 text-navy-700">
+                        <div className="grid size-10 shrink-0 place-items-center rounded-md bg-navy-50 text-navy-700 dark:text-navy-300">
                           <Icon className="size-5" />
                         </div>
                         <div className="min-w-0">

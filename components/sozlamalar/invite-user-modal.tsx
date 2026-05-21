@@ -147,7 +147,7 @@ export function InviteUserModal({ open, onClose }: InviteUserModalProps) {
               autoFocus
             />
             {errors.fullName && (
-              <p className="mt-1 text-[11px] text-red-600">{errors.fullName}</p>
+              <p className="mt-1 text-[11px] text-red-600 dark:text-red-400">{errors.fullName}</p>
             )}
           </div>
 
@@ -163,7 +163,7 @@ export function InviteUserModal({ open, onClose }: InviteUserModalProps) {
               disabled={pending}
             />
             {errors.email && (
-              <p className="mt-1 text-[11px] text-red-600">{errors.email}</p>
+              <p className="mt-1 text-[11px] text-red-600 dark:text-red-400">{errors.email}</p>
             )}
           </div>
 
@@ -187,7 +187,7 @@ export function InviteUserModal({ open, onClose }: InviteUserModalProps) {
               />
             </div>
             {errors.phone && (
-              <p className="mt-1 text-[11px] text-red-600">{errors.phone}</p>
+              <p className="mt-1 text-[11px] text-red-600 dark:text-red-400">{errors.phone}</p>
             )}
           </div>
 
@@ -211,7 +211,7 @@ export function InviteUserModal({ open, onClose }: InviteUserModalProps) {
               ))}
             </select>
             {errors.role && (
-              <p className="mt-1 text-[11px] text-red-600">{errors.role}</p>
+              <p className="mt-1 text-[11px] text-red-600 dark:text-red-400">{errors.role}</p>
             )}
           </div>
 
@@ -219,7 +219,7 @@ export function InviteUserModal({ open, onClose }: InviteUserModalProps) {
           <div>
             <Label>Status</Label>
             <div className="flex h-9 items-center">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-600 bg-amber-50 px-2.5 py-0.5 text-[11px] font-mono font-semibold uppercase text-amber-600">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-600 bg-amber-50 px-2.5 py-0.5 text-[11px] font-mono font-semibold uppercase text-amber-600 dark:text-amber-300">
                 <span className="size-1.5 rounded-full bg-amber-600" />
                 Taklif yuborilmoqda
               </span>

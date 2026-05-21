@@ -68,13 +68,13 @@ export function AmbiguousCard({ row, doc }: AmbiguousCardProps) {
           <div className="text-[14px] font-semibold text-ink-900 leading-tight">
             {row.rawName}
             <ArrowRight className="inline mx-1.5 size-3 text-ink-400 align-middle" />
-            <span className="text-red-700">MXIK aniq emas</span>
+            <span className="text-red-700 dark:text-red-300">MXIK aniq emas</span>
           </div>
           <div className="mt-1 text-[12px] text-ink-500">
             Hujjat{" "}
             <Link
               href={`/hujjatlar/${doc.id}`}
-              className="font-mono font-semibold text-navy-700 hover:underline"
+              className="font-mono font-semibold text-navy-700 dark:text-navy-300 hover:underline"
             >
               №{doc.number}
             </Link>{" "}
@@ -108,7 +108,7 @@ export function AmbiguousCard({ row, doc }: AmbiguousCardProps) {
                 disabled={pending}
                 className="accent-navy-700"
               />
-              <span className="font-mono font-semibold text-navy-700">
+              <span className="font-mono font-semibold text-navy-700 dark:text-navy-300">
                 {alt.code}
               </span>
               <span className="text-ink-700">{alt.name}</span>

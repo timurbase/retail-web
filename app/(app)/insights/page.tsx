@@ -26,7 +26,7 @@ function WeeklyTrendChart() {
             <span
               className={cn(
                 "font-mono text-[10px] font-semibold",
-                d.today ? "text-emerald-700" : "text-ink-500"
+                d.today ? "text-emerald-700 dark:text-emerald-300" : "text-ink-500"
               )}
             >
               {d.value.toFixed(1)}M
@@ -43,7 +43,7 @@ function WeeklyTrendChart() {
             <span
               className={cn(
                 "font-mono text-[11px]",
-                d.today ? "font-semibold text-emerald-700" : "text-ink-500"
+                d.today ? "font-semibold text-emerald-700 dark:text-emerald-300" : "text-ink-500"
               )}
             >
               {d.day}
@@ -83,7 +83,7 @@ export default function InsightsPage() {
               </Button>
               <Link
                 href="/sozlamalar"
-                className="rounded-sm px-3 py-2 text-[13px] font-medium text-navy-700 hover:bg-navy-50"
+                className="rounded-sm px-3 py-2 text-[13px] font-medium text-navy-700 dark:text-navy-300 hover:bg-navy-50"
               >
                 Sozlamalar
               </Link>
@@ -97,7 +97,7 @@ export default function InsightsPage() {
           <section className="mb-4">
             <div className="mb-3 flex items-end justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="grid size-7 place-items-center rounded-sm bg-emerald-50 text-emerald-700">
+                <div className="grid size-7 place-items-center rounded-sm bg-emerald-50 text-emerald-700 dark:text-emerald-300">
                   <BarChart3 className="size-4" />
                 </div>
                 <h2 className="text-[15px] font-semibold tracking-tight text-ink-900">
@@ -130,7 +130,7 @@ export default function InsightsPage() {
                     <span className="text-[12px] text-ink-500">
                       Haftalik o&apos;sish
                     </span>
-                    <span className="flex items-center gap-1 font-mono text-[13px] font-semibold text-emerald-700">
+                    <span className="flex items-center gap-1 font-mono text-[13px] font-semibold text-emerald-700 dark:text-emerald-300">
                       <TrendingUp className="size-3.5" />
                       +18.4%
                     </span>
@@ -142,7 +142,7 @@ export default function InsightsPage() {
               <Card>
                 <CardHeader className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-1.5">
-                    <TrendingUp className="size-4 text-emerald-700" />
+                    <TrendingUp className="size-4 text-emerald-700 dark:text-emerald-300" />
                     Top sotilgan tovarlar
                   </CardTitle>
                 </CardHeader>
@@ -153,7 +153,7 @@ export default function InsightsPage() {
                       className="flex items-center justify-between border-b border-border px-5 py-2.5 last:border-0"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="grid size-5 place-items-center rounded-sm bg-emerald-50 font-mono text-[10px] font-bold text-emerald-700">
+                        <span className="grid size-5 place-items-center rounded-sm bg-emerald-50 font-mono text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
                           {i + 1}
                         </span>
                         <span className="text-[13px] font-medium text-ink-900">
@@ -164,7 +164,7 @@ export default function InsightsPage() {
                         <span className="font-mono text-[12px] text-ink-600">
                           {formatNumber(p.qty)}
                         </span>
-                        <span className="flex items-center gap-0.5 font-mono text-[11px] font-semibold text-emerald-700">
+                        <span className="flex items-center gap-0.5 font-mono text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
                           <TrendingUp className="size-3" />+
                           {Math.round(p.trend * 100)}%
                         </span>
@@ -178,7 +178,7 @@ export default function InsightsPage() {
               <Card>
                 <CardHeader className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-1.5">
-                    <TrendingDown className="size-4 text-red-600" />
+                    <TrendingDown className="size-4 text-red-600 dark:text-red-400" />
                     Sotuv pasayayotgan
                   </CardTitle>
                 </CardHeader>
@@ -189,7 +189,7 @@ export default function InsightsPage() {
                       className="flex items-center justify-between border-b border-border px-5 py-2.5 last:border-0"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="grid size-5 place-items-center rounded-sm bg-red-50 font-mono text-[10px] font-bold text-red-700">
+                        <span className="grid size-5 place-items-center rounded-sm bg-red-50 font-mono text-[10px] font-bold text-red-700 dark:text-red-300">
                           {i + 1}
                         </span>
                         <span className="text-[13px] font-medium text-ink-900">
@@ -200,7 +200,7 @@ export default function InsightsPage() {
                         <span className="font-mono text-[12px] text-ink-600">
                           {formatNumber(p.qty)}
                         </span>
-                        <span className="flex items-center gap-0.5 font-mono text-[11px] font-semibold text-red-700">
+                        <span className="flex items-center gap-0.5 font-mono text-[11px] font-semibold text-red-700 dark:text-red-300">
                           <TrendingDown className="size-3" />
                           {Math.round(p.trend * 100)}%
                         </span>
@@ -210,7 +210,7 @@ export default function InsightsPage() {
                   <div className="px-5 py-3">
                     <Link
                       href="/hisobotlar"
-                      className="flex items-center gap-1 text-[12px] font-medium text-navy-700 hover:underline"
+                      className="flex items-center gap-1 text-[12px] font-medium text-navy-700 dark:text-navy-300 hover:underline"
                     >
                       To&apos;liq hisobot
                       <ArrowRight className="size-3" />

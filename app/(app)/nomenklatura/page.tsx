@@ -44,7 +44,7 @@ export default function NomenklaturaPage() {
             <KpiCard
               label="MXIK biriktirilgan"
               value={formatNumber(stats.withMxik)}
-              valueClassName="text-emerald-600"
+              valueClassName="text-emerald-600 dark:text-emerald-400"
               trend={{
                 value: `${mxikCoverage}% qoplangan`,
                 direction: "up",
@@ -53,13 +53,13 @@ export default function NomenklaturaPage() {
             <KpiCard
               label="MXIK yo'q"
               value={formatNumber(stats.withoutMxik)}
-              valueClassName="text-red-700"
+              valueClassName="text-red-700 dark:text-red-300"
               trend={{ value: "Tekshirish kerak", direction: "warn" }}
             />
             <KpiCard
               label="Dublikat shubha"
               value={formatNumber(dupSuspects)}
-              valueClassName="text-amber-600"
+              valueClassName="text-amber-600 dark:text-amber-300"
               trend={{ value: "AI aniqladi", direction: "warn" }}
             />
           </div>
@@ -77,7 +77,7 @@ export default function NomenklaturaPage() {
                 </div>
                 <a
                   href="#"
-                  className="whitespace-nowrap text-[13px] font-semibold text-amber-700 underline hover:text-amber-600"
+                  className="whitespace-nowrap text-[13px] font-semibold text-amber-700 underline hover:text-amber-600 dark:text-amber-300"
                 >
                   Ko&apos;rib chiqish &rarr;
                 </a>

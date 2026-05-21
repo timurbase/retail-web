@@ -16,9 +16,9 @@ const TrendIcon: Record<"up" | "down" | "warn", LucideIcon> = {
 };
 
 const trendColor: Record<"up" | "down" | "warn", string> = {
-  up: "text-emerald-600",
-  down: "text-red-600",
-  warn: "text-amber-600",
+  up: "text-emerald-600 dark:text-emerald-400",
+  down: "text-red-600 dark:text-red-400",
+  warn: "text-amber-600 dark:text-amber-300",
 };
 
 export function KpiCard({ label, value, trend, valueClassName }: KpiCardProps) {

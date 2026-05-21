@@ -57,13 +57,13 @@ export default function DashboardPage() {
             <KpiCard
               label="Review kutmoqda"
               value={mockKpi.reviewQueueCount}
-              valueClassName="text-amber-600"
+              valueClassName="text-amber-600 dark:text-amber-300"
               trend={{ value: "Operator tasdig'i kerak", direction: "warn" }}
             />
             <KpiCard
               label="Avto-aniqlik"
               value={`${Math.round(mockKpi.autoApprovalRate * 100)}%`}
-              valueClassName="text-emerald-600"
+              valueClassName="text-emerald-600 dark:text-emerald-400"
               trend={{
                 value: `+${Math.round(mockKpi.trends.accuracy * 100)}% bu hafta`,
                 direction: "up",
@@ -72,7 +72,7 @@ export default function DashboardPage() {
             <KpiCard
               label="MXIK xato"
               value={mockKpi.mxikErrorsToday}
-              valueClassName="text-red-700"
+              valueClassName="text-red-700 dark:text-red-300"
               trend={{ value: "-2 kechagiga", direction: "down" }}
             />
           </div>
@@ -96,12 +96,12 @@ export default function DashboardPage() {
             <Card>
               <CardHeader className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="size-4 text-emerald-600" />
+                  <Sparkles className="size-4 text-emerald-600 dark:text-emerald-400" />
                   AI Insights
                 </CardTitle>
                 <Link
                   href="/insights"
-                  className="text-[11px] font-medium text-navy-700 hover:underline"
+                  className="text-[11px] font-medium text-navy-700 dark:text-navy-300 hover:underline"
                 >
                   Hammasi →
                 </Link>
@@ -132,7 +132,7 @@ export default function DashboardPage() {
               <CardTitle>So'nggi hujjatlar</CardTitle>
               <Link
                 href="/hujjatlar"
-                className="text-[11px] font-medium text-navy-700 hover:underline"
+                className="text-[11px] font-medium text-navy-700 dark:text-navy-300 hover:underline"
               >
                 Hammasi →
               </Link>
@@ -160,17 +160,17 @@ export default function DashboardPage() {
                       {formatSom(doc.totalAmount)}
                     </span>
                     {doc.status === "review" && (
-                      <span className="rounded-full bg-amber-50 border border-amber-600 px-2 py-0.5 text-[10px] font-mono font-semibold text-amber-600">
+                      <span className="rounded-full bg-amber-50 border border-amber-600 px-2 py-0.5 text-[10px] font-mono font-semibold text-amber-600 dark:text-amber-300">
                         {doc.reviewCount} review
                       </span>
                     )}
                     {doc.status === "approved" && (
-                      <span className="rounded-full bg-emerald-50 border border-emerald-600 px-2 py-0.5 text-[10px] font-mono font-semibold text-emerald-700">
+                      <span className="rounded-full bg-emerald-50 border border-emerald-600 px-2 py-0.5 text-[10px] font-mono font-semibold text-emerald-700 dark:text-emerald-300">
                         ✓ Tasdiqlangan
                       </span>
                     )}
                     {doc.status === "pending" && (
-                      <span className="rounded-full bg-navy-50 border border-navy-700 px-2 py-0.5 text-[10px] font-mono font-semibold text-navy-700">
+                      <span className="rounded-full bg-navy-50 border border-navy-700 px-2 py-0.5 text-[10px] font-mono font-semibold text-navy-700 dark:text-navy-300">
                         Parsing...
                       </span>
                     )}

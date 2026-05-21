@@ -59,7 +59,7 @@ export default function ReviewQueuePage() {
             <KpiCard
               label="Jami kutmoqda"
               value={total}
-              valueClassName="text-amber-600"
+              valueClassName="text-amber-600 dark:text-amber-300"
               trend={{
                 value: "Operator tasdig'i kerak",
                 direction: "warn",
@@ -68,13 +68,13 @@ export default function ReviewQueuePage() {
             <KpiCard
               label="Yangi mahsulot"
               value={newCount}
-              valueClassName="text-amber-600"
+              valueClassName="text-amber-600 dark:text-amber-300"
               trend={{ value: "Katalogga qo'shish", direction: "warn" }}
             />
             <KpiCard
               label="MXIK aniq emas"
               value={ambiguousCount}
-              valueClassName="text-red-700"
+              valueClassName="text-red-700 dark:text-red-300"
               trend={{ value: "Variant tanlash kerak", direction: "warn" }}
             />
           </div>

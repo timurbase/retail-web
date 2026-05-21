@@ -47,13 +47,13 @@ export function NewProductCard({ row, doc }: NewProductCardProps) {
           <div className="text-[14px] font-semibold text-ink-900 leading-tight">
             {row.rawName}
             <ArrowRight className="inline mx-1.5 size-3 text-ink-400 align-middle" />
-            <span className="text-amber-600">Yangi mahsulot</span>
+            <span className="text-amber-600 dark:text-amber-300">Yangi mahsulot</span>
           </div>
           <div className="mt-1 text-[12px] text-ink-500">
             Hujjat{" "}
             <Link
               href={`/hujjatlar/${doc.id}`}
-              className="font-mono font-semibold text-navy-700 hover:underline"
+              className="font-mono font-semibold text-navy-700 dark:text-navy-300 hover:underline"
             >
               №{doc.number}
             </Link>{" "}
@@ -67,11 +67,11 @@ export function NewProductCard({ row, doc }: NewProductCardProps) {
       {row.mxik && (
         <div className="mt-3 rounded-sm border border-border bg-surface px-3 py-2.5">
           <div className="flex items-center gap-2 text-[11px] text-ink-500 font-mono uppercase tracking-wider">
-            <Sparkles className="size-3 text-emerald-600" />
+            <Sparkles className="size-3 text-emerald-600 dark:text-emerald-400" />
             AI taklif
           </div>
           <div className="mt-1.5 flex items-center gap-3">
-            <span className="font-mono text-[13px] font-semibold text-navy-700">
+            <span className="font-mono text-[13px] font-semibold text-navy-700 dark:text-navy-300">
               {row.mxik.code}
             </span>
             <span className="text-[13px] text-ink-700">{row.mxik.name}</span>

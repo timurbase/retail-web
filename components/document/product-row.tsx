@@ -60,12 +60,12 @@ export function ProductRow({ row, index, docId }: ProductRowProps) {
 
   const arrowColor =
     row.status === "matched" || row.status === "approved"
-      ? "text-emerald-700"
+      ? "text-emerald-700 dark:text-emerald-300"
       : row.status === "rejected"
       ? "text-ink-500 line-through"
       : row.status === "new"
-      ? "text-amber-600"
-      : "text-red-700";
+      ? "text-amber-600 dark:text-amber-300"
+      : "text-red-700 dark:text-red-300";
 
   function handleApprove() {
     startTransition(async () => {
@@ -169,7 +169,7 @@ export function ProductRow({ row, index, docId }: ProductRowProps) {
               type="button"
               onClick={openEdit}
               disabled={pending || isRejected}
-              className="ml-0.5 grid size-5 place-items-center rounded-sm text-ink-400 hover:bg-ink-100 hover:text-navy-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="ml-0.5 grid size-5 place-items-center rounded-sm text-ink-400 hover:bg-ink-100 hover:text-navy-700 dark:text-navy-300 disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="MXIK kodini tahrirlash"
               title="MXIK kodini tahrirlash"
             >
@@ -182,7 +182,7 @@ export function ProductRow({ row, index, docId }: ProductRowProps) {
             type="button"
             onClick={openEdit}
             disabled={pending}
-            className="inline-flex items-center gap-1 rounded-sm border border-dashed border-border-strong px-2 py-0.5 text-ink-500 hover:bg-ink-100 hover:text-navy-700"
+            className="inline-flex items-center gap-1 rounded-sm border border-dashed border-border-strong px-2 py-0.5 text-ink-500 hover:bg-ink-100 hover:text-navy-700 dark:text-navy-300"
           >
             <Pencil className="size-3" />
             MXIK qo'shish
@@ -221,7 +221,7 @@ export function ProductRow({ row, index, docId }: ProductRowProps) {
                   disabled={pending}
                   className="accent-navy-700"
                 />
-                <span className="font-mono font-semibold text-navy-700">
+                <span className="font-mono font-semibold text-navy-700 dark:text-navy-300">
                   {alt.code}
                 </span>
                 <span className="text-ink-700">{alt.name}</span>
@@ -251,7 +251,7 @@ export function ProductRow({ row, index, docId }: ProductRowProps) {
               size="sm"
               onClick={handleReject}
               disabled={pending}
-              className="ml-auto text-red-700 hover:bg-red-50"
+              className="ml-auto text-red-700 dark:text-red-300 hover:bg-red-50"
             >
               <X className="size-3.5" />
               Rad qilish
@@ -270,7 +270,7 @@ export function ProductRow({ row, index, docId }: ProductRowProps) {
               size="sm"
               onClick={handleReject}
               disabled={pending}
-              className="ml-auto text-red-700 hover:bg-red-50"
+              className="ml-auto text-red-700 dark:text-red-300 hover:bg-red-50"
             >
               <X className="size-3.5" />
               Rad qilish
@@ -284,7 +284,7 @@ export function ProductRow({ row, index, docId }: ProductRowProps) {
             size="sm"
             onClick={handleReject}
             disabled={pending}
-            className="ml-auto text-red-700 hover:bg-red-50"
+            className="ml-auto text-red-700 dark:text-red-300 hover:bg-red-50"
           >
             <X className="size-3.5" />
             Rad qilish
@@ -292,7 +292,7 @@ export function ProductRow({ row, index, docId }: ProductRowProps) {
         )}
 
         {isApproved && (
-          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-600 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">
+          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-600 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
             <CheckCircle2 className="size-3" />
             Tasdiqlangan
           </span>
@@ -309,7 +309,7 @@ export function ProductRow({ row, index, docId }: ProductRowProps) {
               size="sm"
               onClick={handleApprove}
               disabled={pending}
-              className="ml-auto text-emerald-700 hover:bg-emerald-50"
+              className="ml-auto text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50"
             >
               <Check className="size-3.5" />
               Qaytarish
@@ -323,7 +323,7 @@ export function ProductRow({ row, index, docId }: ProductRowProps) {
             size="sm"
             onClick={handleReject}
             disabled={pending}
-            className="ml-auto text-red-700 hover:bg-red-50"
+            className="ml-auto text-red-700 dark:text-red-300 hover:bg-red-50"
           >
             <X className="size-3.5" />
             Rad qilish

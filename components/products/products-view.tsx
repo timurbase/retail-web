@@ -43,9 +43,9 @@ function productStatus(p: Product): "active" | "review" | "missing" {
 }
 
 const statusStyles: Record<"active" | "review" | "missing", string> = {
-  active: "bg-emerald-50 border-emerald-600 text-emerald-700",
-  review: "bg-amber-50 border-amber-600 text-amber-600",
-  missing: "bg-red-50 border-red-600 text-red-700",
+  active: "bg-emerald-50 border-emerald-600 text-emerald-700 dark:text-emerald-300",
+  review: "bg-amber-50 border-amber-600 text-amber-600 dark:text-amber-300",
+  missing: "bg-red-50 border-red-600 text-red-700 dark:text-red-300",
 };
 
 const statusLabel: Record<"active" | "review" | "missing", string> = {
@@ -234,12 +234,12 @@ export function ProductsView({ products }: ProductsViewProps) {
                             {p.mxik}
                           </span>
                           <Check
-                            className="size-3.5 text-emerald-600"
+                            className="size-3.5 text-emerald-600 dark:text-emerald-400"
                             strokeWidth={3}
                           />
                         </span>
                       ) : (
-                        <span className="font-mono text-[12px] text-red-600">
+                        <span className="font-mono text-[12px] text-red-600 dark:text-red-400">
                           — yo&apos;q —
                         </span>
                       )}
@@ -258,7 +258,7 @@ export function ProductsView({ products }: ProductsViewProps) {
                         className={cn(
                           "font-mono text-[13px] font-semibold",
                           p.currentStock < p.minStock
-                            ? "text-red-700"
+                            ? "text-red-700 dark:text-red-300"
                             : "text-ink-900"
                         )}
                       >

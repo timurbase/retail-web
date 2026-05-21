@@ -1,7 +1,8 @@
 import { SozlamalarView } from "@/components/sozlamalar/sozlamalar-view";
-import { getUsers } from "@/lib/store";
+import { getCompany, getUsers } from "@/lib/store";
 
 export default function SozlamalarPage() {
   const users = getUsers();
-  return <SozlamalarView users={users} />;
+  const company = getCompany();
+  return <SozlamalarView users={users} company={company} />;
 }

@@ -65,7 +65,7 @@ export function DocActionBar({
         <strong className="font-mono text-ink-900">
           {matchedCount + approvedCount}/{totalRows}
         </strong>{" "}
-        avto-mos · <strong className="text-amber-600">{reviewCount}</strong>{" "}
+        avto-mos · <strong className="text-amber-600 dark:text-amber-300">{reviewCount}</strong>{" "}
         kutmoqda
       </div>
       <div className="flex items-center gap-2">

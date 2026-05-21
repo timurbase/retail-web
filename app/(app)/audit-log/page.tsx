@@ -29,12 +29,12 @@ interface AuditEntry {
 }
 
 const actionStyles: Record<ActionType, string> = {
-  create: "bg-emerald-50 border-emerald-600 text-emerald-700",
-  approve: "bg-emerald-50 border-emerald-600 text-emerald-700",
-  edit: "bg-amber-50 border-amber-600 text-amber-600",
-  delete: "bg-red-50 border-red-600 text-red-700",
+  create: "bg-emerald-50 border-emerald-600 text-emerald-700 dark:text-emerald-300",
+  approve: "bg-emerald-50 border-emerald-600 text-emerald-700 dark:text-emerald-300",
+  edit: "bg-amber-50 border-amber-600 text-amber-600 dark:text-amber-300",
+  delete: "bg-red-50 border-red-600 text-red-700 dark:text-red-300",
   view: "bg-ink-100 border-ink-400 text-ink-600",
-  auth: "bg-navy-50 border-navy-700 text-navy-700",
+  auth: "bg-navy-50 border-navy-700 text-navy-700 dark:text-navy-300",
 };
 
 const auditEntries: AuditEntry[] = [
@@ -525,7 +525,7 @@ export default function AuditLogPage() {
                 </span>
 
                 {/* Object */}
-                <span className="text-[12px] font-medium text-navy-700 hover:underline cursor-pointer truncate">
+                <span className="text-[12px] font-medium text-navy-700 dark:text-navy-300 hover:underline cursor-pointer truncate">
                   {entry.objectLabel}
                 </span>
 

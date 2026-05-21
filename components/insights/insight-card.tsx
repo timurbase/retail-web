@@ -36,12 +36,12 @@ function AiSuggestionBlock({ label }: { label: string }) {
   return (
     <div className="rounded-sm border border-emerald-600/30 bg-emerald-50 px-3 py-2 text-[13px]">
       <div className="flex items-start gap-2">
-        <Sparkles className="mt-0.5 size-3.5 shrink-0 text-emerald-700" />
+        <Sparkles className="mt-0.5 size-3.5 shrink-0 text-emerald-700 dark:text-emerald-300" />
         <div className="flex-1">
-          <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
             AI tavsiya
           </span>
-          <p className="mt-0.5 font-medium text-emerald-700">{label}</p>
+          <p className="mt-0.5 font-medium text-emerald-700 dark:text-emerald-300">{label}</p>
         </div>
       </div>
     </div>
