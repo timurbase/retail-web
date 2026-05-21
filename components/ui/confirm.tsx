@@ -33,8 +33,8 @@ export function Confirm({
         <div
           className={
             variant === "danger"
-              ? "grid size-10 shrink-0 place-items-center rounded-full bg-red-50 text-red-700"
-              : "grid size-10 shrink-0 place-items-center rounded-full bg-amber-50 text-amber-600"
+              ? "grid size-10 shrink-0 place-items-center rounded-full bg-red-50 text-red-700 dark:text-red-300"
+              : "grid size-10 shrink-0 place-items-center rounded-full bg-amber-50 text-amber-600 dark:text-amber-300"
           }
         >
           <AlertTriangle className="size-5" />

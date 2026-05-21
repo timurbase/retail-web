@@ -15,9 +15,9 @@ function levelOf(score: number): ConfidenceLevel {
 }
 
 const levelStyles: Record<ConfidenceLevel, string> = {
-  high: "bg-emerald-50 text-emerald-700 border-emerald-600",
-  mid: "bg-amber-50 text-amber-600 border-amber-600",
-  low: "bg-red-50 text-red-700 border-red-600",
+  high: "bg-emerald-50 text-emerald-700 dark:text-emerald-300 border-emerald-600",
+  mid: "bg-amber-50 text-amber-600 dark:text-amber-300 border-amber-600",
+  low: "bg-red-50 text-red-700 dark:text-red-300 border-red-600",
 };
 
 const Icon = {

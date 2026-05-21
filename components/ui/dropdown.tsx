@@ -77,7 +77,7 @@ export function DropdownItem({ onClick, variant = "default", icon, children, dis
         "flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] transition-colors",
         disabled && "cursor-not-allowed opacity-50",
         !disabled && variant === "default" && "text-ink-700 hover:bg-ink-100",
-        !disabled && variant === "danger" && "text-red-700 hover:bg-red-50"
+        !disabled && variant === "danger" && "text-red-700 dark:text-red-300 hover:bg-red-50"
       )}
     >
       {icon && <span className="text-ink-500">{icon}</span>}
