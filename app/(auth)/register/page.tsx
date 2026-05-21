@@ -10,10 +10,14 @@ import {
   Building2,
   Check,
   CheckCircle2,
+  Globe2,
   Loader2,
   MapPin,
   Search,
+  ShieldCheck,
   Sparkles,
+  Store,
+  Truck,
   User,
 } from "lucide-react";
 
@@ -25,7 +29,16 @@ import { cn } from "@/lib/utils";
 
 // ===================== TYPES =====================
 
-type EntityKind = "mchj" | "yat" | "jismoniy";
+type RegisterRole = "store" | "supplier" | "soliq";
+
+type EntityKind =
+  | "mchj"
+  | "yat"
+  | "jismoniy"
+  // Supplier-specific entity options
+  | "local"
+  | "international"
+  | "exclusive";
 
 type EntityOption = {
   value: EntityKind;
@@ -36,7 +49,7 @@ type EntityOption = {
   Icon: typeof Building2;
 };
 
-const ENTITY_OPTIONS: EntityOption[] = [
+const STORE_ENTITY_OPTIONS: EntityOption[] = [
   {
     value: "mchj",
     title: "MChJ / OOO / AJ",
@@ -60,6 +73,33 @@ const ENTITY_OPTIONS: EntityOption[] = [
     description: "Yuridik shaxs tashkil etmagan jismoniy shaxs-tadbirkor.",
     stirLength: 14,
     Icon: User,
+  },
+];
+
+const SUPPLIER_ENTITY_OPTIONS: EntityOption[] = [
+  {
+    value: "local",
+    title: "Mahalliy distribyutor",
+    short: "Local distributor",
+    description: "O'zbekiston bo'ylab mahalliy mahsulotlarni tarqatuvchi distribyutor.",
+    stirLength: 9,
+    Icon: Truck,
+  },
+  {
+    value: "international",
+    title: "Xalqaro brend vakili",
+    short: "International brand",
+    description: "Xalqaro brendlarning O'zbekistondagi rasmiy vakili (Coca-Cola, Pepsi, Nestle).",
+    stirLength: 9,
+    Icon: Globe2,
+  },
+  {
+    value: "exclusive",
+    title: "Eksklyuziv distribyutor",
+    short: "Exclusive distributor",
+    description: "Ma'lum bir hudud yoki brand uchun eksklyuziv huquqlarga ega distribyutor.",
+    stirLength: 9,
+    Icon: ShieldCheck,
   },
 ];
 
@@ -99,6 +139,10 @@ type FormData = {
   viloyat: string;
   tuman: string;
   kocha: string;
+  // Supplier-specific
+  hududlar: string[];
+  fleetSize: string;
+  warehouseAddress: string;
 };
 
 const INITIAL_FORM: FormData = {
@@ -112,6 +156,9 @@ const INITIAL_FORM: FormData = {
   viloyat: "",
   tuman: "",
   kocha: "",
+  hududlar: [],
+  fleetSize: "",
+  warehouseAddress: "",
 };
 
 // ===================== HELPERS =====================
@@ -130,10 +177,17 @@ function formatPhone(raw: string): string {
   return parts.join(" ");
 }
 
-const STEPS = [
+const STORE_STEPS = [
   { n: 1, title: "Korxona turi" },
   { n: 2, title: "STIR tekshiruvi" },
   { n: 3, title: "Aloqa ma'lumotlari" },
+  { n: 4, title: "SMS tasdiqlash" },
+];
+
+const SUPPLIER_STEPS = [
+  { n: 1, title: "Brand turi" },
+  { n: 2, title: "STIR tekshiruvi" },
+  { n: 3, title: "Logistika" },
   { n: 4, title: "SMS tasdiqlash" },
 ];
 
@@ -141,12 +195,17 @@ const STEPS = [
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [registerRole, setRegisterRole] = useState<RegisterRole | null>(null);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [error, setError] = useState<string | null>(null);
 
   // Step 2: STIR fetch
   const [fetching, setFetching] = useState(false);
+
+  // Soliq taklif kodi
+  const [soliqCode, setSoliqCode] = useState("");
+  const [soliqValidating, setSoliqValidating] = useState(false);
 
   // Step 4: OTP
   const [otp, setOtp] = useState("");
@@ -155,7 +214,10 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState(false);
   const otpRef = useRef<HTMLInputElement>(null);
 
-  const activeEntity = ENTITY_OPTIONS.find((o) => o.value === form.entityKind) ?? null;
+  const activeOptions =
+    registerRole === "supplier" ? SUPPLIER_ENTITY_OPTIONS : STORE_ENTITY_OPTIONS;
+  const activeSteps = registerRole === "supplier" ? SUPPLIER_STEPS : STORE_STEPS;
+  const activeEntity = activeOptions.find((o) => o.value === form.entityKind) ?? null;
 
   // OTP countdown
   useEffect(() => {
@@ -206,12 +268,28 @@ export default function RegisterPage() {
     setForm((f) => ({ ...f, korxona: null }));
     // Mock fetch — 1s
     setTimeout(() => {
+      let nomi = "Karimov MChJ";
+      let faoliyat = "Chakana savdo (47.11)";
+      if (registerRole === "supplier") {
+        if (activeEntity.value === "international") {
+          nomi = "Coca-Cola Bottlers Uzbekistan";
+          faoliyat = "Ulgurji savdo (46.39) — ichimliklar";
+        } else if (activeEntity.value === "exclusive") {
+          nomi = "Alpha Distribution OOO";
+          faoliyat = "Ulgurji savdo (46.34) — eksklyuziv distribyutsiya";
+        } else {
+          nomi = "Mahalliy Savdo MChJ";
+          faoliyat = "Ulgurji savdo (46.90)";
+        }
+      } else if (activeEntity.value !== "mchj") {
+        nomi = "Karimov YaT";
+      }
       const mockKorxona: KorxonaInfo = {
-        nomi: activeEntity.value === "mchj" ? "Karimov MChJ" : "Karimov YaT",
+        nomi,
         holati: "Faol",
         royxatga: "2019-03-15",
         manzil: "Toshkent shahar, Chilonzor tumani",
-        faoliyat: "Chakana savdo (47.11)",
+        faoliyat,
       };
       setForm((f) => ({ ...f, korxona: mockKorxona }));
       setFetching(false);
@@ -236,10 +314,6 @@ export default function RegisterPage() {
       setError("Direktor F.I.O. kiritilishi shart.");
       return;
     }
-    if (!form.lavozim.trim()) {
-      setError("Lavozim kiritilishi shart.");
-      return;
-    }
     if (digitsOnly(form.phone).length !== 9) {
       setError("Telefon raqam to'liq emas. +998 dan keyin 9 ta raqam bo'lishi kerak.");
       return;
@@ -248,13 +322,34 @@ export default function RegisterPage() {
       setError("Email manzil noto'g'ri formatda.");
       return;
     }
-    if (!form.viloyat) {
-      setError("Viloyatni tanlang.");
-      return;
-    }
-    if (!form.tuman.trim()) {
-      setError("Tuman/shahar kiritilishi shart.");
-      return;
+
+    if (registerRole === "supplier") {
+      if (form.hududlar.length === 0) {
+        setError("Kamida bitta etkazib berish hududini tanlang.");
+        return;
+      }
+      const fleet = parseInt(form.fleetSize || "0", 10);
+      if (!fleet || fleet < 1) {
+        setError("Avto-park o'lchami kamida 1 ta avtomobil bo'lishi kerak.");
+        return;
+      }
+      if (!form.warehouseAddress.trim()) {
+        setError("Ombor manzilini kiriting.");
+        return;
+      }
+    } else {
+      if (!form.lavozim.trim()) {
+        setError("Lavozim kiritilishi shart.");
+        return;
+      }
+      if (!form.viloyat) {
+        setError("Viloyatni tanlang.");
+        return;
+      }
+      if (!form.tuman.trim()) {
+        setError("Tuman/shahar kiritilishi shart.");
+        return;
+      }
     }
 
     setStep(4);
@@ -272,8 +367,34 @@ export default function RegisterPage() {
     setTimeout(() => {
       setCreating(false);
       setSuccess(true);
-      setTimeout(() => router.push("/onboarding"), 1500);
+      const redirectPath =
+        registerRole === "supplier" ? "/supplier/dashboard" : "/onboarding";
+      setTimeout(() => router.push(redirectPath), 1500);
     }, 800);
+  }
+
+  // ===== Soliq code validation =====
+  function handleSoliqValidate(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (soliqCode.trim().length < 6) {
+      setError("Taklif kodi kamida 6 ta belgidan iborat bo'lishi kerak.");
+      return;
+    }
+    setSoliqValidating(true);
+    setTimeout(() => {
+      setSoliqValidating(false);
+      // Mock: kod "SOLIQ-DEMO" yoki "INVITE-2026" success — boshqalari xatolik
+      if (
+        soliqCode.trim().toUpperCase() === "SOLIQ-DEMO" ||
+        soliqCode.trim().toUpperCase() === "INVITE-2026"
+      ) {
+        setSuccess(true);
+        setTimeout(() => router.push("/soliq/dashboard"), 1200);
+      } else {
+        setError("Noto'g'ri taklif kodi. Kodingizni qayta tekshiring.");
+      }
+    }, 1000);
   }
 
   function handleResend() {
@@ -292,10 +413,16 @@ export default function RegisterPage() {
               <CheckCircle2 className="size-8 text-emerald-600 dark:text-emerald-400" />
             </div>
             <h2 className="mt-5 text-xl font-bold tracking-tight text-ink-900">
-              Korxonangiz ro'yxatdan o'tdi!
+              {registerRole === "supplier"
+                ? "Ta'minotchi hisobingiz tayyor!"
+                : registerRole === "soliq"
+                ? "Soliq xodimi hisobi tasdiqlandi!"
+                : "Korxonangiz ro'yxatdan o'tdi!"}
             </h2>
             <p className="mt-2 max-w-sm text-[14px] leading-relaxed text-ink-600">
-              {form.korxona?.nomi} muvaffaqiyatli yaratildi. Boshqaruv paneliga o'tilmoqda…
+              {registerRole === "soliq"
+                ? "Soliq paneliga o'tilmoqda…"
+                : `${form.korxona?.nomi ?? "Hisob"} muvaffaqiyatli yaratildi. Boshqaruv paneliga o'tilmoqda…`}
             </p>
             <div className="mt-6 flex items-center gap-2 font-mono text-[12px] text-ink-500">
               <Loader2 className="size-3.5 animate-spin" />
@@ -307,26 +434,165 @@ export default function RegisterPage() {
     );
   }
 
+  // STEP 0: role selection
+  if (registerRole === null) {
+    return (
+      <div className="w-full max-w-[560px]">
+        <div className="mb-7 text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-ink-900">
+            Qaysi rolda ro&apos;yxatdan o&apos;tasiz?
+          </h1>
+          <p className="mt-2 text-[13px] leading-relaxed text-ink-600">
+            RetailFlow AI uchta sub-platforma uchun bitta tizimda ishlaydi.
+            Rolingizga qarab keyingi qadamlar farqlanadi.
+          </p>
+        </div>
+        <Card className="shadow-md">
+          <div className="space-y-3 p-6">
+            <RoleCard
+              icon={Store}
+              title="Chakana savdo do'koni"
+              description="Hujjat qabul qilish, MXIK validatsiya, ombor boshqaruvi"
+              onClick={() => setRegisterRole("store")}
+            />
+            <RoleCard
+              icon={Truck}
+              title="Ulgurji ta'minotchi"
+              description="50-500 do'koniga sotuv, talab analitikasi, logistika"
+              onClick={() => setRegisterRole("supplier")}
+            />
+            <RoleCard
+              icon={ShieldCheck}
+              title="Soliq xodimi (cheklangan)"
+              description="Faqat taklif orqali — taklif kodi kerak bo'ladi"
+              onClick={() => setRegisterRole("soliq")}
+            />
+          </div>
+        </Card>
+        <p className="mt-6 text-center text-[13px] text-ink-600">
+          Hisobingiz bormi?{" "}
+          <Link
+            href="/login"
+            className="font-semibold text-navy-700 dark:text-navy-300 hover:text-navy-600 dark:text-navy-400"
+          >
+            Kirish →
+          </Link>
+        </p>
+      </div>
+    );
+  }
+
+  // SOLIQ flow: simple invite code form
+  if (registerRole === "soliq") {
+    return (
+      <div className="w-full max-w-[480px]">
+        <div className="mb-7 text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-ink-900">
+            Soliq taklif kodini kiriting
+          </h1>
+          <p className="mt-2 text-[13px] leading-relaxed text-ink-600">
+            Soliq xodimlari faqat administrator tomonidan yuborilgan taklif kodi
+            orqali ro&apos;yxatdan o&apos;tishi mumkin.
+          </p>
+        </div>
+        <Card className="shadow-md">
+          <div className="p-6">
+            {error && (
+              <div className="mb-5">
+                <Alert variant="error">{error}</Alert>
+              </div>
+            )}
+            <form onSubmit={handleSoliqValidate} className="space-y-5">
+              <div>
+                <Label htmlFor="soliq-code">Taklif kodi</Label>
+                <Input
+                  id="soliq-code"
+                  mono
+                  placeholder="SOLIQ-XXXX-XXXX"
+                  value={soliqCode}
+                  onChange={(e) => setSoliqCode(e.target.value.toUpperCase())}
+                  autoFocus
+                />
+                <p className="mt-2 text-[12px] text-ink-500">
+                  Demo kod: <span className="font-mono">SOLIQ-DEMO</span> yoki{" "}
+                  <span className="font-mono">INVITE-2026</span>
+                </p>
+              </div>
+              <Button
+                type="submit"
+                variant="primary"
+                className="h-11 w-full text-[15px]"
+                disabled={soliqValidating || !soliqCode.trim()}
+              >
+                {soliqValidating ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Tekshirilmoqda…
+                  </>
+                ) : (
+                  <>
+                    Tasdiqlash
+                    <ArrowRight className="size-4" />
+                  </>
+                )}
+              </Button>
+              <button
+                type="button"
+                onClick={() => {
+                  setRegisterRole(null);
+                  setError(null);
+                  setSoliqCode("");
+                }}
+                className="flex w-full items-center justify-center gap-1.5 text-[13px] font-medium text-ink-600 hover:text-ink-900"
+              >
+                <ArrowLeft className="size-3.5" />
+                Rol tanlashga qaytish
+              </button>
+            </form>
+          </div>
+        </Card>
+        <p className="mt-6 text-center text-[13px] text-ink-600">
+          Hisobingiz bormi?{" "}
+          <Link
+            href="/login"
+            className="font-semibold text-navy-700 dark:text-navy-300 hover:text-navy-600 dark:text-navy-400"
+          >
+            Kirish →
+          </Link>
+        </p>
+      </div>
+    );
+  }
+
+  // STORE / SUPPLIER flow — 4-step wizard
   return (
     <div className="w-full max-w-[560px]">
       {/* Progress */}
-      <ProgressBar current={step} />
+      <ProgressBar current={step} steps={activeSteps} />
 
       {/* Heading */}
       <div className="mb-7 text-center">
         <h1 className="text-2xl font-bold tracking-tight text-ink-900">
-          {step === 1 && "Korxonangiz turini tanlang"}
+          {step === 1 &&
+            (registerRole === "supplier"
+              ? "Brand turini tanlang"
+              : "Korxonangiz turini tanlang")}
           {step === 2 && "STIR orqali korxonani tekshiring"}
-          {step === 3 && "Aloqa ma'lumotlari"}
+          {step === 3 &&
+            (registerRole === "supplier" ? "Logistika ma'lumotlari" : "Aloqa ma'lumotlari")}
           {step === 4 && "Telefon raqamni tasdiqlang"}
         </h1>
         <p className="mt-2 text-[13px] leading-relaxed text-ink-600">
           {step === 1 &&
-            "Tarmoqqa ro'yxatdan o'tuvchi yuridik shaxs turi STIR formatini belgilaydi."}
+            (registerRole === "supplier"
+              ? "Sizning distribyutsiya modelingiz keyingi qadamlardagi sozlamalarni belgilaydi."
+              : "Tarmoqqa ro'yxatdan o'tuvchi yuridik shaxs turi STIR formatini belgilaydi.")}
           {step === 2 &&
             "STIR'ni soliq.uz katalogi bo'yicha avtomatik tekshiramiz va korxona ma'lumotlarini olamiz."}
           {step === 3 &&
-            "Rasmiy aloqa shaxsi va do'kon manzili. Bu ma'lumotlar Didox hujjatlarida ko'rinadi."}
+            (registerRole === "supplier"
+              ? "Etkazib berish hududlari, avto-park o'lchami va ombor manzili."
+              : "Rasmiy aloqa shaxsi va do'kon manzili. Bu ma'lumotlar Didox hujjatlarida ko'rinadi.")}
           {step === 4 && (
             <>
               <span className="font-mono text-ink-900">+998 {formatPhone(form.phone)}</span>{" "}
@@ -346,9 +612,16 @@ export default function RegisterPage() {
 
           {step === 1 && (
             <Step1
+              options={activeOptions}
               selected={form.entityKind}
               onSelect={(v) => update("entityKind", v)}
               onContinue={submitStep1}
+              onChangeRole={() => {
+                setRegisterRole(null);
+                setStep(1);
+                setForm(INITIAL_FORM);
+                setError(null);
+              }}
             />
           )}
 
@@ -367,7 +640,16 @@ export default function RegisterPage() {
             />
           )}
 
-          {step === 3 && (
+          {step === 3 && registerRole === "supplier" && (
+            <Step3Supplier
+              form={form}
+              update={update}
+              onSubmit={submitStep3}
+              onBack={goBack}
+            />
+          )}
+
+          {step === 3 && registerRole === "store" && (
             <Step3
               form={form}
               update={update}
@@ -401,13 +683,50 @@ export default function RegisterPage() {
   );
 }
 
+// ===================== ROLE CARD =====================
+
+function RoleCard({
+  icon: Icon,
+  title,
+  description,
+  onClick,
+}: {
+  icon: typeof Store;
+  title: string;
+  description: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex w-full items-center gap-4 rounded-md border border-border bg-surface-card p-4 text-left transition-colors hover:border-navy-700 hover:bg-navy-50"
+    >
+      <div className="grid size-11 shrink-0 place-items-center rounded-md bg-ink-100 text-ink-700 transition-colors group-hover:bg-navy-700 group-hover:text-white">
+        <Icon className="size-5" />
+      </div>
+      <div className="flex-1">
+        <div className="text-[14px] font-semibold text-ink-900">{title}</div>
+        <p className="mt-0.5 text-[12px] leading-relaxed text-ink-600">{description}</p>
+      </div>
+      <ArrowRight className="size-4 text-ink-400 transition-colors group-hover:text-navy-700 dark:text-navy-300" />
+    </button>
+  );
+}
+
 // ===================== PROGRESS =====================
 
-function ProgressBar({ current }: { current: 1 | 2 | 3 | 4 }) {
+function ProgressBar({
+  current,
+  steps,
+}: {
+  current: 1 | 2 | 3 | 4;
+  steps: { n: number; title: string }[];
+}) {
   return (
     <div className="mb-7">
       <div className="flex items-center gap-2">
-        {STEPS.map((s, i) => {
+        {steps.map((s, i) => {
           const isDone = s.n < current;
           const isCurrent = s.n === current;
           return (
@@ -432,7 +751,7 @@ function ProgressBar({ current }: { current: 1 | 2 | 3 | 4 }) {
                   {s.title}
                 </span>
               </div>
-              {i < STEPS.length - 1 && (
+              {i < steps.length - 1 && (
                 <div
                   className={cn(
                     "h-px flex-1 transition-colors",
@@ -451,18 +770,22 @@ function ProgressBar({ current }: { current: 1 | 2 | 3 | 4 }) {
 // ===================== STEP 1 =====================
 
 function Step1({
+  options,
   selected,
   onSelect,
   onContinue,
+  onChangeRole,
 }: {
+  options: EntityOption[];
   selected: EntityKind | null;
   onSelect: (v: EntityKind) => void;
   onContinue: () => void;
+  onChangeRole?: () => void;
 }) {
   return (
     <div className="space-y-5">
       <div className="space-y-3">
-        {ENTITY_OPTIONS.map((opt) => {
+        {options.map((opt) => {
           const active = selected === opt.value;
           return (
             <button
@@ -520,6 +843,17 @@ function Step1({
         Davom etish
         <ArrowRight className="size-4" />
       </Button>
+
+      {onChangeRole && (
+        <button
+          type="button"
+          onClick={onChangeRole}
+          className="flex w-full items-center justify-center gap-1.5 text-[13px] font-medium text-ink-600 hover:text-ink-900"
+        >
+          <ArrowLeft className="size-3.5" />
+          Boshqa rolni tanlash
+        </button>
+      )}
     </div>
   );
 }
@@ -783,6 +1117,177 @@ function Step3({
               value={form.kocha}
               onChange={(e) => update("kocha", e.target.value)}
             />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 pt-1">
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex items-center gap-1.5 text-[13px] font-medium text-ink-600 hover:text-ink-900"
+        >
+          <ArrowLeft className="size-3.5" />
+          Orqaga
+        </button>
+        <div className="flex-1" />
+        <Button type="submit" variant="primary" className="h-11 px-6 text-[15px]">
+          SMS yuborish
+          <ArrowRight className="size-4" />
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+// ===================== STEP 3 (SUPPLIER) =====================
+
+function Step3Supplier({
+  form,
+  update,
+  onSubmit,
+  onBack,
+}: {
+  form: FormData;
+  update: <K extends keyof FormData>(key: K, value: FormData[K]) => void;
+  onSubmit: (e: FormEvent) => void;
+  onBack: () => void;
+}) {
+  function toggleHudud(v: string) {
+    if (form.hududlar.includes(v)) {
+      update(
+        "hududlar",
+        form.hududlar.filter((x) => x !== v),
+      );
+    } else {
+      update("hududlar", [...form.hududlar, v]);
+    }
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-5">
+      {form.korxona && (
+        <div className="flex items-center gap-3 rounded-md border border-border bg-ink-100 px-3 py-2.5">
+          <div className="grid size-8 place-items-center rounded-md bg-navy-700 text-white">
+            <Truck className="size-4" />
+          </div>
+          <div className="leading-tight">
+            <div className="text-[13px] font-semibold text-ink-900">
+              {form.korxona.nomi}
+            </div>
+            <div className="font-mono text-[11px] text-ink-500">STIR {form.stir}</div>
+          </div>
+        </div>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <Label htmlFor="director">Direktor F.I.O.</Label>
+          <Input
+            id="director"
+            placeholder="Tursunov Asror Bahodirovich"
+            value={form.director}
+            onChange={(e) => update("director", e.target.value)}
+            autoFocus
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="phone">Telefon raqam</Label>
+          <div className="flex h-9 w-full overflow-hidden rounded-sm border border-border-strong bg-surface-card focus-within:border-navy-700 focus-within:outline focus-within:outline-2 focus-within:outline-navy-700 focus-within:-outline-offset-1">
+            <span className="grid place-items-center border-r border-border-strong bg-ink-100 px-3 font-mono text-sm font-semibold text-ink-700">
+              +998
+            </span>
+            <input
+              id="phone"
+              type="tel"
+              inputMode="numeric"
+              autoComplete="tel-national"
+              placeholder="XX XXX XX XX"
+              value={formatPhone(form.phone)}
+              onChange={(e) => update("phone", digitsOnly(e.target.value))}
+              className="h-full flex-1 bg-transparent px-3 font-mono text-sm text-ink-900 placeholder:text-ink-400 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <div>
+          <Label htmlFor="email">
+            Email{" "}
+            <span className="ml-1 font-normal normal-case text-ink-400">— ixtiyoriy</span>
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="info@alpha-distribution.uz"
+            value={form.email}
+            onChange={(e) => update("email", e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Logistika ma'lumotlari */}
+      <div className="rounded-md border border-border bg-ink-100/50 p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <Truck className="size-4 text-navy-700 dark:text-navy-300" />
+          <span className="text-[12px] font-semibold uppercase tracking-wider text-ink-700">
+            Logistika
+          </span>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <Label>Etkazib berish hududlari</Label>
+            <div className="flex flex-wrap gap-1.5">
+              {VILOYATLAR.map((v) => {
+                const active = form.hududlar.includes(v);
+                return (
+                  <button
+                    type="button"
+                    key={v}
+                    onClick={() => toggleHudud(v)}
+                    className={cn(
+                      "rounded-full border px-3 py-1 text-[12px] font-medium transition-colors",
+                      active
+                        ? "border-navy-700 bg-navy-700 text-white"
+                        : "border-border-strong bg-surface-card text-ink-700 hover:border-navy-700",
+                    )}
+                  >
+                    {active && <Check className="mr-1 inline size-3" />}
+                    {v}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-2 text-[12px] text-ink-500">
+              Kamida bitta hudud tanlang. Tanlandi:{" "}
+              <span className="font-mono">{form.hududlar.length}</span> ta
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="fleet">Avto-park o&apos;lchami</Label>
+              <Input
+                id="fleet"
+                mono
+                inputMode="numeric"
+                placeholder="23"
+                value={form.fleetSize}
+                onChange={(e) => update("fleetSize", digitsOnly(e.target.value).slice(0, 4))}
+              />
+              <p className="mt-1 text-[12px] text-ink-500">Etkazib beruvchi avtomobillar soni</p>
+            </div>
+
+            <div>
+              <Label htmlFor="warehouse">Ombor manzili</Label>
+              <Input
+                id="warehouse"
+                placeholder="Toshkent, Sergeli, Sanoat ko'cha 5"
+                value={form.warehouseAddress}
+                onChange={(e) => update("warehouseAddress", e.target.value)}
+              />
+            </div>
           </div>
         </div>
       </div>

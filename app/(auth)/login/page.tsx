@@ -3,13 +3,23 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { ArrowLeft, ArrowRight, KeyRound, Loader2, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  KeyRound,
+  Loader2,
+  ShieldCheck,
+  Store,
+  Truck,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
 import { Alert } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/toast";
+import { cn } from "@/lib/utils";
+import type { Role } from "@/lib/types";
 
 type Step = "phone" | "otp";
 
@@ -32,6 +42,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { info } = useToast();
   const [step, setStep] = useState<Step>("phone");
+  const [role, setRole] = useState<Role>("store");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +96,13 @@ export default function LoginPage() {
     // Mock OTP tekshiruvi — 700ms
     setTimeout(() => {
       setLoading(false);
-      router.push("/dashboard");
+      if (role === "supplier") {
+        router.push("/supplier/dashboard");
+      } else if (role === "soliq") {
+        router.push("/soliq/dashboard");
+      } else {
+        router.push("/dashboard");
+      }
     }, 700);
   }
 
@@ -138,6 +155,56 @@ export default function LoginPage() {
 
           {step === "phone" ? (
             <form onSubmit={handleSendOtp} className="space-y-5">
+              {/* Role selector — segmented control */}
+              <div>
+                <div className="grid grid-cols-3 gap-1 rounded-md border border-border bg-surface-card p-1">
+                  <button
+                    type="button"
+                    onClick={() => setRole("store")}
+                    className={cn(
+                      "flex flex-col items-center gap-1 rounded-sm px-2 py-2 text-[12px] font-medium transition-colors",
+                      role === "store"
+                        ? "bg-navy-700 text-white"
+                        : "text-ink-600 hover:bg-ink-100",
+                    )}
+                  >
+                    <Store className="size-4" />
+                    Korxona
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRole("supplier")}
+                    className={cn(
+                      "flex flex-col items-center gap-1 rounded-sm px-2 py-2 text-[12px] font-medium transition-colors",
+                      role === "supplier"
+                        ? "bg-navy-700 text-white"
+                        : "text-ink-600 hover:bg-ink-100",
+                    )}
+                  >
+                    <Truck className="size-4" />
+                    Ta&apos;minotchi
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRole("soliq")}
+                    disabled
+                    title="Faqat taklif orqali"
+                    className={cn(
+                      "flex flex-col items-center gap-1 rounded-sm px-2 py-2 text-[12px] font-medium transition-colors",
+                      "text-ink-600 disabled:cursor-not-allowed disabled:opacity-50",
+                    )}
+                  >
+                    <ShieldCheck className="size-4" />
+                    Soliq
+                  </button>
+                </div>
+                <div className="mt-2 text-center text-[11px] text-ink-500">
+                  {role === "store" && "Chakana savdo do'koni, MChJ yoki YaT"}
+                  {role === "supplier" && "Ulgurji distribyutor / brand vakili"}
+                  {role === "soliq" && "Faqat taklif orqali (taklif kodi kerak)"}
+                </div>
+              </div>
+
               <div>
                 <Label htmlFor="phone">Telefon raqam</Label>
                 <div className="flex h-9 w-full overflow-hidden rounded-sm border border-border-strong bg-surface-card focus-within:border-navy-700 focus-within:outline focus-within:outline-2 focus-within:outline-navy-700 focus-within:-outline-offset-1">
