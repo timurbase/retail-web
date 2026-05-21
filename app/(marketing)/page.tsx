@@ -31,7 +31,7 @@ export default function LandingPage() {
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
             {/* Left: copy */}
             <div>
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-600 bg-emerald-50 px-3 py-1 text-[12px] font-semibold text-emerald-700">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-600 bg-emerald-50 px-3 py-1 text-[12px] font-semibold text-emerald-700 dark:text-emerald-300">
                 <span className="size-1.5 rounded-full bg-emerald-600 animate-pulse" />
                 BETA · O'zbekistondagi 270K+ do'kon uchun yaratildi
               </div>
@@ -66,19 +66,19 @@ export default function LandingPage() {
 
               <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-[12px] text-ink-500">
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="size-3.5 text-emerald-600" />
+                  <CheckCircle2 className="size-3.5 text-emerald-600 dark:text-emerald-400" />
                   Didox EDO
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="size-3.5 text-emerald-600" />
+                  <CheckCircle2 className="size-3.5 text-emerald-600 dark:text-emerald-400" />
                   Soliq.uz MXIK
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="size-3.5 text-emerald-600" />
+                  <CheckCircle2 className="size-3.5 text-emerald-600 dark:text-emerald-400" />
                   O'zbek tilida
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="size-3.5 text-emerald-600" />
+                  <CheckCircle2 className="size-3.5 text-emerald-600 dark:text-emerald-400" />
                   Beta — birinchi 6 oy bepul
                 </span>
               </div>
@@ -106,7 +106,7 @@ export default function LandingPage() {
                       21.05.2026 · 4,567,800 so'm
                     </div>
                   </div>
-                  <span className="rounded-full border border-amber-600 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-600">
+                  <span className="rounded-full border border-amber-600 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-300">
                     3 review
                   </span>
                 </div>
@@ -122,14 +122,14 @@ export default function LandingPage() {
                   <div className="flex items-center gap-3 rounded-md border border-l-4 border-border border-l-amber-600 bg-surface-card p-2.5 text-[12px]">
                     <div className="flex-1">
                       <div className="font-semibold text-ink-900">Coca-Cola 0.5L</div>
-                      <div className="font-mono text-[10px] text-amber-600">Yangi mahsulot · MXIK 2202100000?</div>
+                      <div className="font-mono text-[10px] text-amber-600 dark:text-amber-300">Yangi mahsulot · MXIK 2202100000?</div>
                     </div>
                     <ConfidenceBadge score={0.72} />
                   </div>
                   <div className="flex items-center gap-3 rounded-md border border-l-4 border-border border-l-red-600 bg-surface-card p-2.5 text-[12px]">
                     <div className="flex-1">
                       <div className="font-semibold text-ink-900">Hindiston choyi</div>
-                      <div className="font-mono text-[10px] text-red-700">3 variantdan tanlang</div>
+                      <div className="font-mono text-[10px] text-red-700 dark:text-red-300">3 variantdan tanlang</div>
                     </div>
                     <ConfidenceBadge score={0.43} />
                   </div>
@@ -146,14 +146,14 @@ export default function LandingPage() {
                   <span className="text-ink-600">
                     <strong className="font-mono text-ink-900">5/8</strong> avto-mos · 3 kutmoqda
                   </span>
-                  <span className="font-semibold text-emerald-700">Tasdiqlash →</span>
+                  <span className="font-semibold text-emerald-700 dark:text-emerald-300">Tasdiqlash →</span>
                 </div>
               </div>
 
               {/* floating elements */}
               <div className="absolute -left-6 -bottom-6 hidden rounded-lg border border-border bg-surface-card p-3 shadow-lg lg:block">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="size-4 text-emerald-600" />
+                  <Sparkles className="size-4 text-emerald-600 dark:text-emerald-400" />
                   <span className="text-[12px] font-semibold text-ink-900">
                     AI tahlil 5 sekundda
                   </span>
@@ -170,8 +170,8 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
             <Stat value="270K+" label="Maqsadli do'konlar" />
             <Stat value="461,800+" label="MXIK kodi katalogda" />
-            <Stat value="87%" label="Avto-aniqlik (beta)" valueColor="text-emerald-600" />
-            <Stat value="10×" label="Tezroq qabul qilish" valueColor="text-navy-700" />
+            <Stat value="87%" label="Avto-aniqlik (beta)" valueColor="text-emerald-600 dark:text-emerald-400" />
+            <Stat value="10×" label="Tezroq qabul qilish" valueColor="text-navy-700 dark:text-navy-300" />
           </div>
         </div>
       </section>
@@ -180,7 +180,7 @@ export default function LandingPage() {
       <section className="border-b border-border py-20">
         <div className="mx-auto max-w-7xl px-6">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-3 font-mono text-[11px] font-semibold uppercase tracking-wider text-navy-700">
+            <div className="mb-3 font-mono text-[11px] font-semibold uppercase tracking-wider text-navy-700 dark:text-navy-300">
               Muammo
             </div>
             <h2 className="text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">
@@ -255,7 +255,7 @@ export default function LandingPage() {
       <section id="imkoniyatlar" className="border-b border-border py-20">
         <div className="mx-auto max-w-7xl px-6">
           <div className="mb-12 max-w-2xl">
-            <div className="mb-3 font-mono text-[11px] font-semibold uppercase tracking-wider text-navy-700">
+            <div className="mb-3 font-mono text-[11px] font-semibold uppercase tracking-wider text-navy-700 dark:text-navy-300">
               Imkoniyatlar
             </div>
             <h2 className="text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">
@@ -367,7 +367,7 @@ export default function LandingPage() {
       <section id="narxlar" className="border-b border-border py-20">
         <div className="mx-auto max-w-7xl px-6">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-3 font-mono text-[11px] font-semibold uppercase tracking-wider text-navy-700">
+            <div className="mb-3 font-mono text-[11px] font-semibold uppercase tracking-wider text-navy-700 dark:text-navy-300">
               Narxlar
             </div>
             <h2 className="text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">
@@ -467,9 +467,9 @@ function ProblemCard({
   accent?: "navy" | "red" | "amber";
 }) {
   const accentColor = {
-    navy: "text-navy-700",
-    red: "text-red-700",
-    amber: "text-amber-600",
+    navy: "text-navy-700 dark:text-navy-300",
+    red: "text-red-700 dark:text-red-300",
+    amber: "text-amber-600 dark:text-amber-300",
   }[accent];
 
   return (
@@ -517,7 +517,7 @@ function FeatureCard({
 }) {
   return (
     <div className="rounded-md border border-border bg-surface-card p-5 transition-colors hover:border-navy-700">
-      <div className="mb-3 grid size-9 place-items-center rounded-md bg-navy-50 text-navy-700">
+      <div className="mb-3 grid size-9 place-items-center rounded-md bg-navy-50 text-navy-700 dark:text-navy-300">
         <Icon className="size-4" />
       </div>
       <div className="text-[15px] font-semibold text-ink-900">{title}</div>
@@ -556,7 +556,7 @@ function PricingCard({
           Tavsiya
         </span>
       )}
-      <div className={`text-[13px] font-bold uppercase tracking-wider ${highlighted ? "text-emerald-400" : "text-navy-700"}`}>
+      <div className={`text-[13px] font-bold uppercase tracking-wider ${highlighted ? "text-emerald-400" : "text-navy-700 dark:text-navy-300"}`}>
         {name}
       </div>
       <div className="mt-3 flex items-baseline gap-2">
@@ -569,7 +569,7 @@ function PricingCard({
       <ul className={`mt-6 space-y-2.5 text-[13px] ${highlighted ? "text-white/85" : "text-ink-700"}`}>
         {features.map((f) => (
           <li key={f} className="flex items-start gap-2">
-            <CheckCircle2 className={`size-4 shrink-0 mt-0.5 ${highlighted ? "text-emerald-400" : "text-emerald-600"}`} />
+            <CheckCircle2 className={`size-4 shrink-0 mt-0.5 ${highlighted ? "text-emerald-400" : "text-emerald-600 dark:text-emerald-400"}`} />
             <span>{f}</span>
           </li>
         ))}
