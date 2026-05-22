@@ -38,7 +38,13 @@ export interface ApiInit extends Omit<RequestInit, "body"> {
 const DEFAULT_BASE = "http://127.0.0.1:8000";
 
 function baseUrl(): string {
-  return process.env.NEXT_PUBLIC_API_BASE_URL || DEFAULT_BASE;
+  const env = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (!env && process.env.NODE_ENV === "production") {
+    throw new Error(
+      "NEXT_PUBLIC_API_BASE_URL is not set — backend URL unknown. Set it in the Railway dashboard.",
+    );
+  }
+  return (env || DEFAULT_BASE).replace(/\/$/, "");
 }
 
 function buildUrl(path: string, query?: ApiInit["query"]): string {
@@ -117,7 +123,20 @@ export async function apiFetch<T = unknown>(
     body: body === undefined ? undefined : JSON.stringify(body),
   };
 
-  let res = await fetch(url, requestInit);
+  let res: Response;
+  try {
+    res = await fetch(url, requestInit);
+  } catch (e) {
+    // Node fetch wraps the real cause (ECONNREFUSED, ENOTFOUND, ...) on `.cause`.
+    // Surface both URL and cause so Railway logs + the client error are debuggable.
+    const cause =
+      e instanceof Error && "cause" in e && e.cause
+        ? (e.cause as { code?: string; message?: string })
+        : null;
+    const detail = cause?.code || cause?.message || (e instanceof Error ? e.message : String(e));
+    console.error(`[apiFetch] network failure → ${requestInit.method ?? "GET"} ${url}`, e);
+    throw new Error(`Backend ulanmadi (${detail}) — ${url}`);
+  }
 
   if (res.status === 401 && !anonymous && !skipRefresh) {
     const refreshed = await attemptRefresh();
