@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import * as store from "../store";
+import { products, ApiError } from "@/lib/api";
 import type { Product } from "../types";
 import type { StockMovementKind } from "../store";
 
@@ -14,35 +14,63 @@ function revalidate() {
 }
 
 export async function createProductAction(
-  data: Omit<Product, "id" | "storeId" | "lastReceivedAt">
+  data: Omit<Product, "id" | "storeId" | "lastReceivedAt">,
 ) {
-  const p = store.createProduct(data);
-  revalidate();
-  return { ok: true, product: p };
+  try {
+    const p = await products.create(data);
+    revalidate();
+    return { ok: true as const, product: p };
+  } catch (e) {
+    if (e instanceof ApiError) {
+      return { ok: false as const, error: e.message, code: e.code };
+    }
+    return { ok: false as const, error: "Mahsulot qo'shilmadi" };
+  }
 }
 
 export async function updateProductAction(
   id: string,
-  patch: Partial<Omit<Product, "id" | "storeId">>
+  patch: Partial<Omit<Product, "id" | "storeId">>,
 ) {
-  const p = store.updateProduct(id, patch);
-  revalidate();
-  return { ok: !!p, product: p };
+  try {
+    const p = await products.update(id, patch);
+    revalidate();
+    return { ok: true as const, product: p };
+  } catch (e) {
+    if (e instanceof ApiError) {
+      return { ok: false as const, error: e.message, code: e.code };
+    }
+    return { ok: false as const, error: "Tahrirlashda xato" };
+  }
 }
 
 export async function deleteProductAction(id: string) {
-  const ok = store.deleteProduct(id);
-  revalidate();
-  return { ok };
+  try {
+    await products.remove(id);
+    revalidate();
+    return { ok: true as const };
+  } catch (e) {
+    if (e instanceof ApiError) {
+      return { ok: false as const, error: e.message, code: e.code };
+    }
+    return { ok: false as const, error: "O'chirishda xato" };
+  }
 }
 
 export async function adjustStockAction(
   id: string,
   kind: StockMovementKind,
   qty: number,
-  reason?: string
+  reason?: string,
 ) {
-  const p = store.adjustStock(id, kind, qty, reason);
-  revalidate();
-  return { ok: !!p, product: p };
+  try {
+    const p = await products.adjustStock(id, { kind, qty, reason });
+    revalidate();
+    return { ok: true as const, product: p };
+  } catch (e) {
+    if (e instanceof ApiError) {
+      return { ok: false as const, error: e.message, code: e.code };
+    }
+    return { ok: false as const, error: "Ombor harakatini saqlashda xato" };
+  }
 }

@@ -3,9 +3,19 @@
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SupplierSidebarContent } from "./supplier-sidebar";
+import {
+  SupplierSidebarContent,
+  type SupplierSidebarUser,
+  type SupplierSidebarBadges,
+} from "./supplier-sidebar";
 
-export function SupplierMobileSidebar() {
+export function SupplierMobileSidebar({
+  user,
+  badges,
+}: {
+  user?: SupplierSidebarUser;
+  badges?: SupplierSidebarBadges;
+} = {}) {
   const [open, setOpen] = useState(false);
 
   // Body scroll lock + Escape close
@@ -68,7 +78,11 @@ export function SupplierMobileSidebar() {
           <X className="size-4" />
         </button>
 
-        <SupplierSidebarContent onNavigate={() => setOpen(false)} />
+        <SupplierSidebarContent
+          onNavigate={() => setOpen(false)}
+          user={user}
+          badges={badges}
+        />
       </aside>
     </>
   );

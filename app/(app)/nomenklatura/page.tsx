@@ -4,12 +4,32 @@ import { Alert } from "@/components/ui/alert";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { FileSpreadsheet } from "lucide-react";
 import { ProductsView } from "@/components/products/products-view";
-import { getProducts, getProductStats } from "@/lib/store";
+import { products as productsApi, ApiError } from "@/lib/api";
 import { formatNumber } from "@/lib/utils";
 
-export default function NomenklaturaPage() {
-  const products = getProducts();
-  const stats = getProductStats();
+export default async function NomenklaturaPage() {
+  let products: Awaited<ReturnType<typeof productsApi.list>>["results"] = [];
+  let stats = {
+    total: 0,
+    critical: 0,
+    atMin: 0,
+    ok: 0,
+    withMxik: 0,
+    withoutMxik: 0,
+  };
+  let loadError: string | null = null;
+
+  try {
+    const [pRes, sRes] = await Promise.all([
+      productsApi.list(),
+      productsApi.stats(),
+    ]);
+    products = pRes.results;
+    stats = sRes;
+  } catch (e) {
+    loadError = e instanceof ApiError ? e.message : "Noma'lum xato";
+  }
+
   const dupSuspects = Math.max(0, Math.round(stats.total * 0.05));
   const mxikCoverage =
     stats.total > 0 ? Math.round((stats.withMxik / stats.total) * 100) : 0;
@@ -37,6 +57,12 @@ export default function NomenklaturaPage() {
               </Button>
             </div>
           </div>
+
+          {loadError && (
+            <Alert variant="error" className="mb-4">
+              Yuklashda xatolik: {loadError}
+            </Alert>
+          )}
 
           {/* KPI */}
           <div className="mb-4 grid grid-cols-4 gap-4">

@@ -5,22 +5,75 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Plus, Sparkles } from "lucide-react";
+import { mockWeeklyChart } from "@/lib/mock-data";
 import {
-  mockKpi,
-  mockWeeklyChart,
-  mockInsights,
-  mockDocuments,
-} from "@/lib/mock-data";
+  documents as documentsApi,
+  products as productsApi,
+  auth as authApi,
+} from "@/lib/api";
+import { ApiError } from "@/lib/api";
+// TODO(backend): insights endpoint not yet available, using mock
+import { getInsights } from "@/lib/store";
 import { formatSom } from "@/lib/utils";
 import Link from "next/link";
 
-export default function DashboardPage() {
+/**
+ * First name = first whitespace-delimited token of the full name.
+ * Falls back to "Foydalanuvchi" so the greeting is always populated.
+ */
+function firstNameFrom(fullName: string | undefined | null): string {
+  const t = (fullName ?? "").trim();
+  if (!t) return "Foydalanuvchi";
+  return t.split(/\s+/)[0];
+}
+
+export default async function DashboardPage() {
   const today = new Date().toLocaleDateString("uz-UZ", {
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
   });
+
+  // Fetch in parallel; degrade gracefully on error.
+  let docStats = {
+    newToday: 0,
+    reviewQueue: 0,
+    autoApprovalRate: 0,
+    totalRows: 0,
+    approvedRows: 0,
+  };
+  let prodStats = {
+    total: 0,
+    critical: 0,
+    atMin: 0,
+    ok: 0,
+    withMxik: 0,
+    withoutMxik: 0,
+  };
+  let recentDocs: Awaited<ReturnType<typeof documentsApi.list>>["results"] = [];
+  let firstName = "Foydalanuvchi";
+  let loadError: string | null = null;
+
+  try {
+    const [ds, ps, rd, me] = await Promise.all([
+      documentsApi.stats(),
+      productsApi.stats(),
+      documentsApi.list({ limit: 5 }),
+      authApi.me().catch(() => null) as Promise<{
+        user?: { full_name?: string };
+      } | null>,
+    ]);
+    docStats = ds;
+    prodStats = ps;
+    recentDocs = rd.results;
+    firstName = firstNameFrom(me?.user?.full_name);
+  } catch (e) {
+    loadError = e instanceof ApiError ? e.message : "Noma'lum xato";
+  }
+
+  const insights = getInsights();
+  const mxikErrors = prodStats.withoutMxik;
 
   return (
     <>
@@ -32,7 +85,8 @@ export default function DashboardPage() {
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-ink-900">
-                Salom, Aziz <span className="inline-block animate-pulse">👋</span>
+                Salom, {firstName}{" "}
+                <span className="inline-block animate-pulse">👋</span>
               </h1>
               <p className="mt-1 font-mono text-[13px] text-ink-500 capitalize">
                 {today}
@@ -44,36 +98,42 @@ export default function DashboardPage() {
             </Button>
           </div>
 
+          {loadError && (
+            <Alert variant="error" className="mb-4">
+              Yuklashda xatolik: {loadError}
+            </Alert>
+          )}
+
           {/* KPI Grid */}
           <div className="mb-6 grid grid-cols-4 gap-4">
             <KpiCard
               label="Bugun yangi hujjat"
-              value={mockKpi.newDocumentsToday}
+              value={docStats.newToday}
               trend={{
-                value: `+${mockKpi.trends.newDocs} kechagiga nisbatan`,
+                value: "Bugungi hujjatlar soni",
                 direction: "up",
               }}
             />
             <KpiCard
               label="Review kutmoqda"
-              value={mockKpi.reviewQueueCount}
+              value={docStats.reviewQueue}
               valueClassName="text-amber-600 dark:text-amber-300"
               trend={{ value: "Operator tasdig'i kerak", direction: "warn" }}
             />
             <KpiCard
               label="Avto-aniqlik"
-              value={`${Math.round(mockKpi.autoApprovalRate * 100)}%`}
+              value={`${Math.round(docStats.autoApprovalRate * 100)}%`}
               valueClassName="text-emerald-600 dark:text-emerald-400"
               trend={{
-                value: `+${Math.round(mockKpi.trends.accuracy * 100)}% bu hafta`,
+                value: `${docStats.approvedRows}/${docStats.totalRows} qator`,
                 direction: "up",
               }}
             />
             <KpiCard
               label="MXIK xato"
-              value={mockKpi.mxikErrorsToday}
+              value={mxikErrors}
               valueClassName="text-red-700 dark:text-red-300"
-              trend={{ value: "-2 kechagiga", direction: "down" }}
+              trend={{ value: "Kod biriktirilmagan", direction: "warn" }}
             />
           </div>
 
@@ -107,7 +167,7 @@ export default function DashboardPage() {
                 </Link>
               </CardHeader>
               <CardContent className="space-y-2 p-4">
-                {mockInsights.slice(0, 3).map((ins) => (
+                {insights.slice(0, 3).map((ins) => (
                   <Alert
                     key={ins.id}
                     variant={
@@ -138,7 +198,7 @@ export default function DashboardPage() {
               </Link>
             </CardHeader>
             <div>
-              {mockDocuments.slice(0, 5).map((doc) => (
+              {recentDocs.map((doc) => (
                 <Link
                   key={doc.id}
                   href={`/hujjatlar/${doc.id}`}

@@ -12,10 +12,12 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { audit as auditApi, ApiError } from "@/lib/api";
+import type { AuditAction, AuditEntry as ApiAuditEntry } from "@/lib/types";
 
 type ActionType = "create" | "approve" | "edit" | "delete" | "view" | "auth";
 
-interface AuditEntry {
+interface AuditRow {
   id: string;
   ts: string; // formatted DD.MM.YYYY HH:MM:SS
   userName: string;
@@ -37,368 +39,71 @@ const actionStyles: Record<ActionType, string> = {
   auth: "bg-navy-50 border-navy-700 text-navy-700 dark:text-navy-300",
 };
 
-const auditEntries: AuditEntry[] = [
-  {
-    id: "ae_001",
-    ts: "21.05.2026 14:32:18",
-    userName: "Aziz K.",
-    userInitials: "AK",
-    userRole: "Omborchi",
-    action: "approve",
-    actionLabel: "Tasdiqladi",
-    objectLabel: "Hujjat №12345",
-    detail: "8 ta mahsulot tasdiqlandi · 4 567 800 so'm",
-    ip: "192.168.1.45",
-  },
-  {
-    id: "ae_002",
-    ts: "21.05.2026 14:30:42",
-    userName: "Aziz K.",
-    userInitials: "AK",
-    userRole: "Omborchi",
-    action: "edit",
-    actionLabel: "Tahrir qildi",
-    objectLabel: "Hujjat №12345 — row_3",
-    detail: "MXIK 0902200000 → 0902100000 ga o'zgartirildi",
-    ip: "192.168.1.45",
-  },
-  {
-    id: "ae_003",
-    ts: "21.05.2026 14:28:55",
-    userName: "Tizim",
-    userInitials: "AI",
-    userRole: "Avto",
-    action: "approve",
-    actionLabel: "Avto-tasdiq",
-    objectLabel: "Hujjat №12346",
-    detail: "23 ta mahsulot avto-tasdiqlandi (confidence ≥0.95)",
-    ip: "—",
-  },
-  {
-    id: "ae_004",
-    ts: "21.05.2026 14:15:03",
-    userName: "Sevara Y.",
-    userInitials: "SY",
-    userRole: "Buxgalter",
-    action: "view",
-    actionLabel: "Ko'rdi",
-    objectLabel: "Hisobot: Bu oy",
-    detail: "Excel eksport qilindi (284 hujjat)",
-    ip: "10.0.12.88",
-  },
-  {
-    id: "ae_005",
-    ts: "21.05.2026 13:58:17",
-    userName: "Bobur T.",
-    userInitials: "BT",
-    userRole: "Kassir",
-    action: "edit",
-    actionLabel: "Tahrir qildi",
-    objectLabel: "Mahsulot: Coca-Cola 0.5L",
-    detail: "Min qoldiq 20 → 30 ga o'zgartirildi",
-    ip: "192.168.1.52",
-  },
-  {
-    id: "ae_006",
-    ts: "21.05.2026 13:42:00",
-    userName: "Admin",
-    userInitials: "AD",
-    userRole: "Administrator",
-    action: "create",
-    actionLabel: "Yaratdi",
-    objectLabel: "Yetkazib beruvchi: Lazzat OOO",
-    detail: "STIR 305678910 · Toshkent shahar",
-    ip: "192.168.1.10",
-  },
-  {
-    id: "ae_007",
-    ts: "21.05.2026 13:30:21",
-    userName: "Admin",
-    userInitials: "AD",
-    userRole: "Administrator",
-    action: "edit",
-    actionLabel: "Yangiladi",
-    objectLabel: "Foydalanuvchi: Sevara Y.",
-    detail: "Rol 'view' → 'edit' huquq berildi",
-    ip: "192.168.1.10",
-  },
-  {
-    id: "ae_008",
-    ts: "21.05.2026 12:48:44",
-    userName: "Aziz K.",
-    userInitials: "AK",
-    userRole: "Omborchi",
-    action: "approve",
-    actionLabel: "Tasdiqladi",
-    objectLabel: "Hujjat №12342",
-    detail: "12 ta mahsulot · 2 845 000 so'm",
-    ip: "192.168.1.45",
-  },
-  {
-    id: "ae_009",
-    ts: "21.05.2026 12:22:11",
-    userName: "Aziz K.",
-    userInitials: "AK",
-    userRole: "Omborchi",
-    action: "edit",
-    actionLabel: "Tahrir qildi",
-    objectLabel: "Hujjat №12342 — row_5",
-    detail: "Mahsulot nomi 'Non gulli' → 'Non gulli (oddiy)'",
-    ip: "192.168.1.45",
-  },
-  {
-    id: "ae_010",
-    ts: "21.05.2026 11:58:30",
-    userName: "Tizim",
-    userInitials: "AI",
-    userRole: "Avto",
-    action: "create",
-    actionLabel: "Yaratildi",
-    objectLabel: "Hujjat №12347 (Didox)",
-    detail: "Avtomatik import Didox webhook orqali",
-    ip: "—",
-  },
-  {
-    id: "ae_011",
-    ts: "21.05.2026 11:45:09",
-    userName: "Madina O.",
-    userInitials: "MO",
-    userRole: "Auditor",
-    action: "view",
-    actionLabel: "Ko'rdi",
-    objectLabel: "Audit log",
-    detail: "Davr: 14.05.2026 - 21.05.2026 · 1 247 yozuv",
-    ip: "10.0.12.99",
-  },
-  {
-    id: "ae_012",
-    ts: "21.05.2026 11:20:55",
-    userName: "Aziz K.",
-    userInitials: "AK",
-    userRole: "Omborchi",
-    action: "approve",
-    actionLabel: "Tasdiqladi",
-    objectLabel: "Hujjat №12338",
-    detail: "5 ta mahsulot · 1 245 600 so'm",
-    ip: "192.168.1.45",
-  },
-  {
-    id: "ae_013",
-    ts: "21.05.2026 10:55:18",
-    userName: "Jasur R.",
-    userInitials: "JR",
-    userRole: "Kassir",
-    action: "edit",
-    actionLabel: "Tahrir qildi",
-    objectLabel: "Mahsulot: Sut 1L Imkon",
-    detail: "Narx 8 200 → 8 500 so'm",
-    ip: "192.168.1.61",
-  },
-  {
-    id: "ae_014",
-    ts: "21.05.2026 10:42:03",
-    userName: "Aziz K.",
-    userInitials: "AK",
-    userRole: "Omborchi",
-    action: "auth",
-    actionLabel: "Kirdi",
-    objectLabel: "Tizimga kirish",
-    detail: "SMS OTP orqali (+998 90 123 45 67)",
-    ip: "192.168.1.45",
-  },
-  {
-    id: "ae_015",
-    ts: "21.05.2026 10:15:42",
-    userName: "Admin",
-    userInitials: "AD",
-    userRole: "Administrator",
-    action: "edit",
-    actionLabel: "Yangiladi",
-    objectLabel: "Sozlamalar: MXIK threshold",
-    detail: "Confidence 0.80 → 0.85 ga o'zgartirildi",
-    ip: "192.168.1.10",
-  },
-  {
-    id: "ae_016",
-    ts: "21.05.2026 09:48:21",
-    userName: "Tizim",
-    userInitials: "AI",
-    userRole: "Avto",
-    action: "create",
-    actionLabel: "Yaratildi",
-    objectLabel: "AI Insight: Coca-Cola low-stock",
-    detail: "Critical · Qoldiq 3 dona · 50 dona buyurtma tavsiya",
-    ip: "—",
-  },
-  {
-    id: "ae_017",
-    ts: "21.05.2026 09:30:15",
-    userName: "Sevara Y.",
-    userInitials: "SY",
-    userRole: "Buxgalter",
-    action: "auth",
-    actionLabel: "Kirdi",
-    objectLabel: "Tizimga kirish",
-    detail: "Email + parol orqali",
-    ip: "10.0.12.88",
-  },
-  {
-    id: "ae_018",
-    ts: "21.05.2026 09:15:48",
-    userName: "Bobur T.",
-    userInitials: "BT",
-    userRole: "Kassir",
-    action: "delete",
-    actionLabel: "O'chirdi",
-    objectLabel: "Hujjat №12340 (dublikat)",
-    detail: "Sabab: №12339 bilan bir xil hash",
-    ip: "192.168.1.52",
-  },
-  {
-    id: "ae_019",
-    ts: "21.05.2026 08:55:30",
-    userName: "Aziz K.",
-    userInitials: "AK",
-    userRole: "Omborchi",
-    action: "approve",
-    actionLabel: "Tasdiqladi",
-    objectLabel: "Hujjat №12337",
-    detail: "18 ta mahsulot · 6 230 400 so'm",
-    ip: "192.168.1.45",
-  },
-  {
-    id: "ae_020",
-    ts: "21.05.2026 08:42:12",
-    userName: "Tizim",
-    userInitials: "AI",
-    userRole: "Avto",
-    action: "create",
-    actionLabel: "Yaratildi",
-    objectLabel: "Hujjat №12345 (Didox)",
-    detail: "Alpha Distribution OOO · STIR 301234567",
-    ip: "—",
-  },
-  {
-    id: "ae_021",
-    ts: "21.05.2026 08:30:00",
-    userName: "Tizim",
-    userInitials: "AI",
-    userRole: "Avto",
-    action: "edit",
-    actionLabel: "Sync",
-    objectLabel: "MXIK katalog (Soliq.uz)",
-    detail: "461 800 kod yangilandi · 47 yangi qo'shildi",
-    ip: "—",
-  },
-  {
-    id: "ae_022",
-    ts: "20.05.2026 18:22:55",
-    userName: "Admin",
-    userInitials: "AD",
-    userRole: "Administrator",
-    action: "create",
-    actionLabel: "Yaratdi",
-    objectLabel: "Foydalanuvchi: Madina O.",
-    detail: "Rol: Auditor · Email: madina@karimov-mchj.uz",
-    ip: "192.168.1.10",
-  },
-  {
-    id: "ae_023",
-    ts: "20.05.2026 17:48:30",
-    userName: "Aziz K.",
-    userInitials: "AK",
-    userRole: "Omborchi",
-    action: "auth",
-    actionLabel: "Chiqdi",
-    objectLabel: "Tizimdan chiqish",
-    detail: "Sessiya yopildi (manual)",
-    ip: "192.168.1.45",
-  },
-  {
-    id: "ae_024",
-    ts: "20.05.2026 16:30:11",
-    userName: "Aziz K.",
-    userInitials: "AK",
-    userRole: "Omborchi",
-    action: "approve",
-    actionLabel: "Tasdiqladi",
-    objectLabel: "Hujjat №12335",
-    detail: "9 ta mahsulot · 3 120 500 so'm",
-    ip: "192.168.1.45",
-  },
-  {
-    id: "ae_025",
-    ts: "20.05.2026 15:42:08",
-    userName: "Sevara Y.",
-    userInitials: "SY",
-    userRole: "Buxgalter",
-    action: "view",
-    actionLabel: "Ko'rdi",
-    objectLabel: "Hisobot: Bu hafta",
-    detail: "PDF eksport qilindi (45 sahifa)",
-    ip: "10.0.12.88",
-  },
-  {
-    id: "ae_026",
-    ts: "20.05.2026 14:55:22",
-    userName: "Bobur T.",
-    userInitials: "BT",
-    userRole: "Kassir",
-    action: "edit",
-    actionLabel: "Tahrir qildi",
-    objectLabel: "Mahsulot: Non gulli",
-    detail: "Min qoldiq 25 → 30 ga o'zgartirildi",
-    ip: "192.168.1.52",
-  },
-  {
-    id: "ae_027",
-    ts: "20.05.2026 14:12:40",
-    userName: "Admin",
-    userInitials: "AD",
-    userRole: "Administrator",
-    action: "edit",
-    actionLabel: "Yangiladi",
-    objectLabel: "Integratsiya: Telegram Bot",
-    detail: "Webhook URL yangilandi · 3 ta foydalanuvchi qo'shildi",
-    ip: "192.168.1.10",
-  },
-  {
-    id: "ae_028",
-    ts: "20.05.2026 13:30:18",
-    userName: "Jasur R.",
-    userInitials: "JR",
-    userRole: "Kassir",
-    action: "auth",
-    actionLabel: "Kirdi",
-    objectLabel: "Tizimga kirish",
-    detail: "SMS OTP orqali",
-    ip: "192.168.1.61",
-  },
-  {
-    id: "ae_029",
-    ts: "20.05.2026 12:48:55",
-    userName: "Tizim",
-    userInitials: "AI",
-    userRole: "Avto",
-    action: "approve",
-    actionLabel: "Avto-tasdiq",
-    objectLabel: "Hujjat №12334",
-    detail: "15 ta mahsulot avto-tasdiqlandi (confidence ≥0.95)",
-    ip: "—",
-  },
-  {
-    id: "ae_030",
-    ts: "20.05.2026 11:20:03",
-    userName: "Aziz K.",
-    userInitials: "AK",
-    userRole: "Omborchi",
-    action: "auth",
-    actionLabel: "Kirdi",
-    objectLabel: "Tizimga kirish",
-    detail: "SMS OTP orqali (+998 90 123 45 67)",
-    ip: "192.168.1.45",
-  },
-];
+const actionToType: Record<AuditAction, ActionType> = {
+  create: "create",
+  approve: "approve",
+  update: "edit",
+  reject: "delete",
+  delete: "delete",
+  view: "view",
+  auth: "auth",
+  system: "view",
+};
+
+const actionToLabel: Record<AuditAction, string> = {
+  create: "Yaratdi",
+  approve: "Tasdiqladi",
+  update: "Tahrir qildi",
+  reject: "Rad etdi",
+  delete: "O'chirdi",
+  view: "Ko'rdi",
+  auth: "Kirdi",
+  system: "Tizim",
+};
+
+const roleLabels: Record<string, string> = {
+  admin: "Administrator",
+  omborchi: "Omborchi",
+  buxgalter: "Buxgalter",
+  kassir: "Kassir",
+  auditor: "Auditor",
+  firma: "Firma operatori",
+};
+
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+function formatTs(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mi = String(d.getMinutes()).padStart(2, "0");
+  const ss = String(d.getSeconds()).padStart(2, "0");
+  return `${dd}.${mm}.${yyyy} ${hh}:${mi}:${ss}`;
+}
+
+function adapt(entry: ApiAuditEntry): AuditRow {
+  return {
+    id: entry.id,
+    ts: formatTs(entry.timestamp),
+    userName: entry.user.name,
+    userInitials: initialsOf(entry.user.name),
+    userRole: roleLabels[entry.user.role] ?? entry.user.role,
+    action: actionToType[entry.action] ?? "view",
+    actionLabel: actionToLabel[entry.action] ?? entry.action,
+    objectLabel: entry.objectLabel ?? entry.objectType,
+    detail: entry.details ?? "—",
+    ip: entry.ip,
+  };
+}
+
 
 function FilterDropdown({ label }: { label: string }) {
   return (
@@ -409,7 +114,18 @@ function FilterDropdown({ label }: { label: string }) {
   );
 }
 
-export default function AuditLogPage() {
+export default async function AuditLogPage() {
+  let entries: AuditRow[] = [];
+  let total = 0;
+  let loadError: string | null = null;
+  try {
+    const res = await auditApi.list({ limit: 100 });
+    entries = res.results.map(adapt);
+    total = res.count;
+  } catch (e) {
+    loadError = e instanceof ApiError ? e.message : "Noma'lum xato";
+  }
+
   return (
     <>
       <Topbar breadcrumb={[{ label: "Audit log" }]} />
@@ -437,6 +153,12 @@ export default function AuditLogPage() {
               </Button>
             </div>
           </div>
+
+          {loadError && (
+            <Alert variant="error" className="mb-4">
+              Yuklashda xatolik: {loadError}
+            </Alert>
+          )}
 
           {/* Immutability alert */}
           <Alert variant="info" className="mb-4">
@@ -480,7 +202,7 @@ export default function AuditLogPage() {
               <span>Tafsilot</span>
               <span>IP</span>
             </div>
-            {auditEntries.map((entry) => (
+            {entries.map((entry) => (
               <div
                 key={entry.id}
                 className="grid grid-cols-[170px_180px_120px_220px_1fr_120px] items-center gap-3 border-b border-border px-5 py-3 last:border-0 hover:bg-ink-100/40"
@@ -542,37 +264,61 @@ export default function AuditLogPage() {
             ))}
           </Card>
 
-          {/* Pagination */}
-          <div className="mt-4 flex items-center justify-between text-[13px] text-ink-600">
-            <span className="font-mono">
-              1-30 / <span className="font-semibold text-ink-900">1 847</span>
-            </span>
-            <div className="flex items-center gap-1">
-              <Button variant="secondary" size="sm" disabled>
-                <ChevronLeft className="size-3.5" />
-                Oldingi
-              </Button>
-              <div className="flex items-center gap-0.5 px-2 font-mono">
-                <span className="grid size-7 place-items-center rounded-sm bg-navy-700 text-white text-[12px] font-semibold">
-                  1
+          {/* Pagination (live from API count) */}
+          {(() => {
+            const pageSize = 100;
+            const pageCount = Math.max(1, Math.ceil(total / pageSize));
+            if (pageCount <= 1) return null;
+            // Compact numbering: first 3, ellipsis, last. Current page is
+            // always page 1 today — proper page navigation lands later.
+            const visible: number[] = [1];
+            if (pageCount >= 2) visible.push(2);
+            if (pageCount >= 3) visible.push(3);
+            const showEllipsis = pageCount > 4;
+            const last = pageCount > 3 ? pageCount : null;
+            return (
+              <div className="mt-4 flex items-center justify-between text-[13px] text-ink-600">
+                <span className="font-mono">
+                  1-{entries.length} /{" "}
+                  <span className="font-semibold text-ink-900">
+                    {total.toLocaleString("uz-UZ")}
+                  </span>
                 </span>
-                <button className="grid size-7 place-items-center rounded-sm text-ink-600 hover:bg-ink-100 text-[12px]">
-                  2
-                </button>
-                <button className="grid size-7 place-items-center rounded-sm text-ink-600 hover:bg-ink-100 text-[12px]">
-                  3
-                </button>
-                <span className="px-1 text-ink-400">...</span>
-                <button className="grid size-7 place-items-center rounded-sm text-ink-600 hover:bg-ink-100 text-[12px]">
-                  62
-                </button>
+                <div className="flex items-center gap-1">
+                  <Button variant="secondary" size="sm" disabled>
+                    <ChevronLeft className="size-3.5" />
+                    Oldingi
+                  </Button>
+                  <div className="flex items-center gap-0.5 px-2 font-mono">
+                    {visible.map((p) => (
+                      <span
+                        key={p}
+                        className={
+                          p === 1
+                            ? "grid size-7 place-items-center rounded-sm bg-navy-700 text-white text-[12px] font-semibold"
+                            : "grid size-7 place-items-center rounded-sm text-ink-600 hover:bg-ink-100 text-[12px]"
+                        }
+                      >
+                        {p}
+                      </span>
+                    ))}
+                    {showEllipsis && (
+                      <span className="px-1 text-ink-400">...</span>
+                    )}
+                    {last && last !== visible[visible.length - 1] && (
+                      <span className="grid size-7 place-items-center rounded-sm text-ink-600 hover:bg-ink-100 text-[12px]">
+                        {last}
+                      </span>
+                    )}
+                  </div>
+                  <Button variant="secondary" size="sm" disabled={pageCount === 1}>
+                    Keyingi
+                    <ChevronRight className="size-3.5" />
+                  </Button>
+                </div>
               </div>
-              <Button variant="secondary" size="sm">
-                Keyingi
-                <ChevronRight className="size-3.5" />
-              </Button>
-            </div>
-          </div>
+            );
+          })()}
         </div>
       </main>
     </>

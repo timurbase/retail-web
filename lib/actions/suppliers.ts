@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import * as store from "../store";
+import { suppliers, ApiError } from "@/lib/api";
 import type { Supplier } from "../types";
 
 function revalidate() {
@@ -12,24 +12,45 @@ function revalidate() {
 }
 
 export async function createSupplierAction(
-  data: Omit<Supplier, "id" | "storeId" | "orgId">
+  data: Omit<Supplier, "id" | "storeId" | "orgId">,
 ) {
-  const s = store.createSupplier(data);
-  revalidate();
-  return { ok: true, supplier: s };
+  try {
+    const s = await suppliers.create(data);
+    revalidate();
+    return { ok: true as const, supplier: s };
+  } catch (e) {
+    if (e instanceof ApiError) {
+      return { ok: false as const, error: e.message, code: e.code };
+    }
+    return { ok: false as const, error: "Yetkazib beruvchi qo'shilmadi" };
+  }
 }
 
 export async function updateSupplierAction(
   id: string,
-  patch: Partial<Omit<Supplier, "id" | "storeId">>
+  patch: Partial<Omit<Supplier, "id" | "storeId">>,
 ) {
-  const s = store.updateSupplier(id, patch);
-  revalidate();
-  return { ok: !!s, supplier: s };
+  try {
+    const s = await suppliers.update(id, patch);
+    revalidate();
+    return { ok: true as const, supplier: s };
+  } catch (e) {
+    if (e instanceof ApiError) {
+      return { ok: false as const, error: e.message, code: e.code };
+    }
+    return { ok: false as const, error: "Tahrirlashda xato" };
+  }
 }
 
 export async function deleteSupplierAction(id: string) {
-  const ok = store.deleteSupplier(id);
-  revalidate();
-  return { ok };
+  try {
+    await suppliers.remove(id);
+    revalidate();
+    return { ok: true as const };
+  } catch (e) {
+    if (e instanceof ApiError) {
+      return { ok: false as const, error: e.message, code: e.code };
+    }
+    return { ok: false as const, error: "O'chirishda xato" };
+  }
 }

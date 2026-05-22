@@ -5,7 +5,7 @@ import { DocActionBar } from "@/components/document/doc-action-bar";
 import { DocHeaderMenu } from "@/components/document/doc-header-menu";
 import { Card } from "@/components/ui/card";
 import { Sparkles, FileText } from "lucide-react";
-import { getDocument } from "@/lib/store";
+import { documents as documentsApi, ApiError } from "@/lib/api";
 import { formatSom, formatDate } from "@/lib/utils";
 import { notFound } from "next/navigation";
 
@@ -15,7 +15,13 @@ interface PageProps {
 
 export default async function DocumentDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const doc = getDocument(id);
+  let doc: Awaited<ReturnType<typeof documentsApi.get>>;
+  try {
+    doc = await documentsApi.get(id);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
   if (!doc) notFound();
 
   const reviewCount = doc.rows.filter(

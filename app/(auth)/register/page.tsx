@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -25,7 +25,15 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
 import { Alert } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
+import {
+  sendOtpAction,
+  verifyOtpAction,
+  registerAction,
+  selectSupplierAction,
+  type Membership,
+} from "@/lib/actions/auth";
 
 // ===================== TYPES =====================
 
@@ -195,10 +203,12 @@ const SUPPLIER_STEPS = [
 
 export default function RegisterPage() {
   const router = useRouter();
+  const toast = useToast();
   const [registerRole, setRegisterRole] = useState<RegisterRole | null>(null);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [error, setError] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
 
   // Step 2: STIR fetch
   const [fetching, setFetching] = useState(false);
@@ -209,6 +219,7 @@ export default function RegisterPage() {
 
   // Step 4: OTP
   const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
   const [resendIn, setResendIn] = useState(0);
   const [creating, setCreating] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -219,11 +230,22 @@ export default function RegisterPage() {
   const activeSteps = registerRole === "supplier" ? SUPPLIER_STEPS : STORE_STEPS;
   const activeEntity = activeOptions.find((o) => o.value === form.entityKind) ?? null;
 
-  // OTP countdown
+  // When entering step 4: send the OTP if not yet sent, focus input, start countdown.
   useEffect(() => {
     if (step !== 4) return;
     otpRef.current?.focus();
     setResendIn(60);
+    if (!otpSent && form.phone) {
+      startTransition(async () => {
+        const res = await sendOtpAction(form.phone, "register");
+        if (!res.ok) {
+          setError(res.error);
+          return;
+        }
+        setOtpSent(true);
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
   useEffect(() => {
@@ -364,13 +386,73 @@ export default function RegisterPage() {
       return;
     }
     setCreating(true);
-    setTimeout(() => {
+    startTransition(async () => {
+      // 1. Verify OTP — this sets auth cookies on success.
+      const verifyRes = await verifyOtpAction(form.phone, otp, "register");
+      if (!verifyRes.ok) {
+        setCreating(false);
+        setError(verifyRes.error);
+        return;
+      }
+
+      if (registerRole === "supplier") {
+        // TODO(backend): /api/auth/register-supplier/
+        // Backend has no register-supplier endpoint yet. If the verify-otp
+        // response happened to include a supplier membership (unlikely on a
+        // fresh signup), route into the supplier portal. Otherwise show a
+        // friendly notice and bounce to /login.
+        setCreating(false);
+        const supplierMembership = (verifyRes.memberships ?? []).find(
+          (m: Membership) =>
+            m.portal === "supplier" ||
+            !!m.supplier ||
+            !!m.tenant_id ||
+            !!m.tenantId,
+        );
+        if (supplierMembership) {
+          const id =
+            supplierMembership.tenant_id ??
+            supplierMembership.tenantId ??
+            supplierMembership.supplier?.id ??
+            (supplierMembership.id as string | undefined);
+          if (id) {
+            const sel = await selectSupplierAction(id);
+            if (sel.ok) {
+              setSuccess(true);
+              setTimeout(() => router.push("/supplier/dashboard"), 1200);
+              return;
+            }
+          }
+        }
+        toast.info(
+          "Distribyutor ro'yxati",
+          "Backend integratsiyasi keyingi sprintga ko'chirildi. Hozircha kirish sahifasiga qaytaramiz.",
+        );
+        setTimeout(() => router.push("/login"), 1500);
+        return;
+      }
+
+      // STORE path → finalize via /api/auth/register/
+      const regRes = await registerAction({
+        stir: form.stir,
+        company_name: form.korxona?.nomi ?? "Korxona",
+        full_name: form.director,
+        director: form.director,
+        address: [form.viloyat, form.tuman, form.kocha]
+          .filter(Boolean)
+          .join(", "),
+        email: form.email || undefined,
+        region: form.viloyat || undefined,
+        district: form.tuman || undefined,
+      });
       setCreating(false);
+      if (!regRes.ok) {
+        setError(regRes.error);
+        return;
+      }
       setSuccess(true);
-      const redirectPath =
-        registerRole === "supplier" ? "/supplier/dashboard" : "/onboarding";
-      setTimeout(() => router.push(redirectPath), 1500);
-    }, 800);
+      setTimeout(() => router.push("/onboarding"), 1500);
+    });
   }
 
   // ===== Soliq code validation =====
@@ -400,6 +482,11 @@ export default function RegisterPage() {
   function handleResend() {
     if (resendIn > 0) return;
     setResendIn(60);
+    setError(null);
+    startTransition(async () => {
+      const res = await sendOtpAction(form.phone, "register");
+      if (!res.ok) setError(res.error);
+    });
   }
 
   // ===================== RENDER =====================

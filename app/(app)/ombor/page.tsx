@@ -1,12 +1,32 @@
 import { Topbar } from "@/components/layout/topbar";
+import { Alert } from "@/components/ui/alert";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { OmborView } from "@/components/ombor/ombor-view";
-import { getProducts, getProductStats } from "@/lib/store";
+import { products as productsApi, ApiError } from "@/lib/api";
 import { formatNumber } from "@/lib/utils";
 
-export default function OmborPage() {
-  const products = getProducts();
-  const stats = getProductStats();
+export default async function OmborPage() {
+  let products: Awaited<ReturnType<typeof productsApi.list>>["results"] = [];
+  let stats = {
+    total: 0,
+    critical: 0,
+    atMin: 0,
+    ok: 0,
+    withMxik: 0,
+    withoutMxik: 0,
+  };
+  let loadError: string | null = null;
+
+  try {
+    const [pRes, sRes] = await Promise.all([
+      productsApi.list(),
+      productsApi.stats(),
+    ]);
+    products = pRes.results;
+    stats = sRes;
+  } catch (e) {
+    loadError = e instanceof ApiError ? e.message : "Noma'lum xato";
+  }
 
   return (
     <>
@@ -14,6 +34,12 @@ export default function OmborPage() {
 
       <main className="flex-1 overflow-y-auto bg-surface px-8 py-8">
         <div className="mx-auto max-w-7xl">
+          {loadError && (
+            <Alert variant="error" className="mb-4">
+              Yuklashda xatolik: {loadError}
+            </Alert>
+          )}
+
           {/* KPIs */}
           <div className="mb-6 grid grid-cols-4 gap-4">
             <KpiCard

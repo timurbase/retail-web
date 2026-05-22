@@ -72,7 +72,7 @@ export function ReviewQueueView({ documents }: ReviewQueueViewProps) {
       let total = 0;
       for (const id of docIds) {
         const res = await bulkApproveHighConfidenceAction(id);
-        total += res.count;
+        if (res.ok) total += res.count;
       }
       success(
         `${total} ta qator avto-tasdiqlandi`,

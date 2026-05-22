@@ -23,10 +23,11 @@ import {
   DropdownItem,
 } from "@/components/ui/dropdown";
 import {
-  getProduct,
-  getDocuments,
-  getSuppliers,
-} from "@/lib/store";
+  products as productsApi,
+  documents as documentsApi,
+  suppliers as suppliersApi,
+  ApiError,
+} from "@/lib/api";
 import { formatSom, formatDate, formatNumber, cn } from "@/lib/utils";
 
 interface PageProps {
@@ -81,7 +82,13 @@ function StatValue({
 
 export default async function ProductDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const product = getProduct(id);
+  let product: Awaited<ReturnType<typeof productsApi.get>>;
+  try {
+    product = await productsApi.get(id);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
   if (!product) notFound();
 
   const rng = seedFrom(product.id);
@@ -123,10 +130,21 @@ export default async function ProductDetailPage({ params }: PageProps) {
     .join(" ");
 
   // Build receipt history: filter docs that contain this product
-  const allDocs = getDocuments();
+  let allDocs: Awaited<ReturnType<typeof documentsApi.list>>["results"] = [];
+  let supplierPool: Awaited<ReturnType<typeof suppliersApi.list>>["results"] = [];
+  try {
+    const [dRes, sRes] = await Promise.all([
+      documentsApi.list(),
+      suppliersApi.list({ limit: 8 }),
+    ]);
+    allDocs = dRes.results;
+    supplierPool = sRes.results;
+  } catch {
+    // Non-fatal: detail page still renders product info; receipts will be empty.
+  }
   const realReceipts = allDocs
     .flatMap((doc) =>
-      doc.rows
+      (doc.rows ?? [])
         .filter((row) => row.mappedProductId === product.id)
         .map((row) => ({
           docId: doc.id,
@@ -143,7 +161,6 @@ export default async function ProductDetailPage({ params }: PageProps) {
     .slice(0, 8);
 
   // Top up to 6-8 with deterministic mock receipts if needed
-  const supplierPool = getSuppliers();
   const mockReceiptCount = Math.max(0, 7 - realReceipts.length);
   const mockReceipts = Array.from({ length: mockReceiptCount }, (_, i) => {
     const supplierIdx = Math.floor(rng() * supplierPool.length);

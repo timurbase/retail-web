@@ -1,9 +1,10 @@
 import { Topbar } from "@/components/layout/topbar";
 import { Card } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 import { DocListRowMenu } from "@/components/document/doc-list-row-menu";
 import { NewDocButton } from "@/components/document/new-doc-button";
 import { FileText, Image as ImageIcon, FileSpreadsheet } from "lucide-react";
-import { getDocuments, getSuppliers } from "@/lib/store";
+import { documents as documentsApi, suppliers as suppliersApi, ApiError } from "@/lib/api";
 import { formatSom, formatDate } from "@/lib/utils";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
@@ -32,9 +33,21 @@ const statusLabel: Record<string, string> = {
   duplicate: "Dublikat",
 };
 
-export default function HujjatlarPage() {
-  const documents = getDocuments();
-  const suppliers = getSuppliers();
+export default async function HujjatlarPage() {
+  let documents: Awaited<ReturnType<typeof documentsApi.list>>["results"] = [];
+  let suppliers: Awaited<ReturnType<typeof suppliersApi.list>>["results"] = [];
+  let loadError: string | null = null;
+
+  try {
+    const [docs, sups] = await Promise.all([
+      documentsApi.list(),
+      suppliersApi.list(),
+    ]);
+    documents = docs.results;
+    suppliers = sups.results;
+  } catch (e) {
+    loadError = e instanceof ApiError ? e.message : "Noma'lum xato";
+  }
 
   return (
     <>
@@ -55,6 +68,12 @@ export default function HujjatlarPage() {
               <NewDocButton suppliers={suppliers} />
             </div>
           </div>
+
+          {loadError && (
+            <Alert variant="error" className="mb-4">
+              Yuklashda xatolik: {loadError}
+            </Alert>
+          )}
 
           <Card>
             {documents.length === 0 ? (

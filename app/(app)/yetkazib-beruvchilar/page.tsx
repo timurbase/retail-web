@@ -1,11 +1,19 @@
 import { Topbar } from "@/components/layout/topbar";
+import { Alert } from "@/components/ui/alert";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { SuppliersView } from "@/components/suppliers/suppliers-view";
-import { getSuppliers } from "@/lib/store";
+import { suppliers as suppliersApi, ApiError } from "@/lib/api";
 import { formatNumber } from "@/lib/utils";
 
-export default function YetkazibBeruvchilarPage() {
-  const suppliers = getSuppliers();
+export default async function YetkazibBeruvchilarPage() {
+  let suppliers: Awaited<ReturnType<typeof suppliersApi.list>>["results"] = [];
+  let loadError: string | null = null;
+  try {
+    const res = await suppliersApi.list();
+    suppliers = res.results;
+  } catch (e) {
+    loadError = e instanceof ApiError ? e.message : "Noma'lum xato";
+  }
 
   const total = suppliers.length;
   const verifiedCount = suppliers.filter((s) => s.verified).length;
@@ -31,6 +39,12 @@ export default function YetkazibBeruvchilarPage() {
               </p>
             </div>
           </div>
+
+          {loadError && (
+            <Alert variant="error" className="mb-4">
+              Yuklashda xatolik: {loadError}
+            </Alert>
+          )}
 
           {/* KPI */}
           <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

@@ -11,6 +11,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { audit, ApiError } from "@/lib/api";
+import type { AuditAction, AuditEntry } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type ActionType = "create" | "approve" | "edit" | "delete" | "view" | "auth";
@@ -28,6 +30,58 @@ interface SupplierAuditEntry {
   ip: string;
 }
 
+function initialsOf(name: string): string {
+  const parts = name.split(/\s+/).filter(Boolean).slice(0, 2);
+  if (parts.length === 0) return "??";
+  return parts.map((p) => p[0]?.toUpperCase() ?? "").join("");
+}
+
+function formatTimestamp(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(
+    d.getHours(),
+  )}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+const ACTION_TO_TYPE: Record<AuditAction, ActionType> = {
+  create: "create",
+  update: "edit",
+  delete: "delete",
+  approve: "approve",
+  reject: "delete",
+  auth: "auth",
+  view: "view",
+  system: "view",
+};
+
+const ACTION_LABEL: Record<AuditAction, string> = {
+  create: "Yaratdi",
+  update: "Tahrirladi",
+  delete: "O'chirdi",
+  approve: "Tasdiqladi",
+  reject: "Rad etdi",
+  auth: "Kirdi",
+  view: "Ko'rdi",
+  system: "Tizim",
+};
+
+function toViewEntry(e: AuditEntry): SupplierAuditEntry {
+  return {
+    id: e.id,
+    ts: formatTimestamp(e.timestamp),
+    userName: e.user?.name ?? "Tizim",
+    userInitials: initialsOf(e.user?.name ?? "Tizim"),
+    userRole: e.user?.role ?? "system",
+    action: ACTION_TO_TYPE[e.action] ?? "view",
+    actionLabel: ACTION_LABEL[e.action] ?? e.action,
+    objectLabel: e.objectLabel ?? `${e.objectType} ${e.objectId}`,
+    detail: e.details ?? "—",
+    ip: e.ip ?? "—",
+  };
+}
+
 const actionStyles: Record<ActionType, string> = {
   create: "bg-emerald-50 border-emerald-600 text-emerald-700 dark:text-emerald-300",
   approve: "bg-emerald-50 border-emerald-600 text-emerald-700 dark:text-emerald-300",
@@ -37,8 +91,9 @@ const actionStyles: Record<ActionType, string> = {
   auth: "bg-navy-50 border-navy-700 text-navy-700 dark:text-navy-300",
 };
 
-// 30 mock entries — supplier objectTypes (invoice/payment/store/order/route/integration)
-const auditEntries: SupplierAuditEntry[] = [
+// Fallback mock entries used only when the API request fails. Kept verbatim so
+// the page degrades gracefully during back-end outages.
+const fallbackEntries: SupplierAuditEntry[] = [
   {
     id: "se_001",
     ts: "21.05.2026 09:48:22",
@@ -410,7 +465,20 @@ function FilterDropdown({ label }: { label: string }) {
   );
 }
 
-export default function SupplierAuditLogPage() {
+export default async function SupplierAuditLogPage() {
+  let auditEntries: SupplierAuditEntry[] = [];
+  let totalCount = 0;
+  let loadError: string | null = null;
+  try {
+    const res = await audit.list({ limit: 100 });
+    auditEntries = res.results.map(toViewEntry);
+    totalCount = res.count ?? auditEntries.length;
+  } catch (e) {
+    loadError = e instanceof ApiError ? e.message : "Audit log yuklab bo'lmadi";
+    auditEntries = fallbackEntries;
+    totalCount = fallbackEntries.length;
+  }
+
   return (
     <>
       <SupplierTopbar
@@ -419,6 +487,11 @@ export default function SupplierAuditLogPage() {
 
       <main className="flex-1 overflow-y-auto bg-surface px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-7xl">
+          {loadError && (
+            <Alert variant="error" className="mb-4">
+              {loadError}
+            </Alert>
+          )}
           {/* Header */}
           <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -575,7 +648,10 @@ export default function SupplierAuditLogPage() {
           {/* Pagination */}
           <div className="mt-4 flex items-center justify-between text-[13px] text-ink-600">
             <span className="font-mono">
-              1-30 / <span className="font-semibold text-ink-900">2 145</span>
+              1-{auditEntries.length} /{" "}
+              <span className="font-semibold text-ink-900">
+                {totalCount.toLocaleString("uz-UZ")}
+              </span>
             </span>
             <div className="flex items-center gap-1">
               <Button variant="secondary" size="sm" disabled>

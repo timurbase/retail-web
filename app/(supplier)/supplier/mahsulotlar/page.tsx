@@ -14,6 +14,7 @@ import {
 
 import { SupplierTopbar } from "@/components/supplier/supplier-topbar";
 import { Card } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Dropdown,
@@ -21,9 +22,21 @@ import {
   DropdownItem,
 } from "@/components/ui/dropdown";
 import { KpiCard } from "@/components/dashboard/kpi-card";
-import { getSupplierProducts } from "@/lib/store";
-import type { SupplierProductCategory } from "@/lib/types";
+import { supplierPortal, ApiError } from "@/lib/api";
+import type { SupplierProduct, SupplierProductCategory } from "@/lib/types";
 import { formatSom, formatNumber, cn } from "@/lib/utils";
+
+interface PageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+function pickString(
+  params: Record<string, string | string[] | undefined>,
+  key: string,
+): string | undefined {
+  const v = params[key];
+  return typeof v === "string" && v.length > 0 ? v : undefined;
+}
 
 const categoryLabel: Record<SupplierProductCategory, string> = {
   ichimliklar: "Ichimliklar",
@@ -53,8 +66,19 @@ const CATEGORY_ORDER: SupplierProductCategory[] = [
   "boshqa",
 ];
 
-export default function ProductCatalogPage() {
-  const products = getSupplierProducts();
+export default async function ProductCatalogPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  let products: SupplierProduct[] = [];
+  let loadError: string | null = null;
+  try {
+    const res = await supplierPortal.products.list({
+      category: pickString(params, "category"),
+      search: pickString(params, "q") ?? pickString(params, "search"),
+    });
+    products = res.results;
+  } catch (e) {
+    loadError = e instanceof ApiError ? e.message : "Mahsulotlarni yuklab bo'lmadi";
+  }
 
   // Category counts
   const categoryCount: Record<string, number> = {};
@@ -76,6 +100,11 @@ export default function ProductCatalogPage() {
 
       <main className="flex-1 overflow-y-auto bg-surface px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-7xl">
+          {loadError && (
+            <Alert variant="error" className="mb-4">
+              {loadError}
+            </Alert>
+          )}
           {/* Header */}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <div>

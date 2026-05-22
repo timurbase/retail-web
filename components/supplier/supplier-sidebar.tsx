@@ -10,18 +10,38 @@ import {
   supplierNavAnalytics,
   supplierNavProfile,
   type SupplierNavItem,
+  type SidebarBadges as SupplierBadges,
 } from "./supplier-nav-items";
+
+export type { SupplierBadges as SupplierSidebarBadges };
+
+export interface SupplierSidebarUser {
+  /** Full name (e.g. "Asror Tursunov") or company name fallback. */
+  fullName: string;
+  /** Localised role label (e.g. "Distribyutor admin"). */
+  roleLabel: string;
+  /** Two-letter avatar initials. */
+  initials: string;
+}
+
+const FALLBACK_SUPPLIER_USER: SupplierSidebarUser = {
+  fullName: "Distribyutor",
+  roleLabel: "Hisob",
+  initials: "?",
+};
 
 function NavSection({
   label,
   items,
   currentPath,
   onNavigate,
+  badges,
 }: {
   label: string;
   items: SupplierNavItem[];
   currentPath: string;
   onNavigate?: () => void;
+  badges?: SupplierBadges;
 }) {
   return (
     <div>
@@ -34,6 +54,8 @@ function NavSection({
             ? currentPath === "/supplier/dashboard"
             : currentPath.startsWith(item.href);
         const Icon = item.icon;
+        const badge = badges?.[item.href];
+        const showBadge = badge && badge.count > 0;
         return (
           <Link
             key={item.href}
@@ -50,16 +72,16 @@ function NavSection({
               <Icon className="size-4" />
               {item.label}
             </span>
-            {item.badge !== undefined && (
+            {showBadge && (
               <span
                 className={cn(
                   "rounded-full px-1.5 py-0.5 text-[10px] font-bold font-mono leading-none",
-                  item.badgeColor === "emerald" && "bg-emerald-600 text-white",
-                  item.badgeColor === "amber" && "bg-amber-600 text-white",
-                  item.badgeColor === "red" && "bg-red-600 text-white"
+                  badge.color === "emerald" && "bg-emerald-600 text-white",
+                  badge.color === "amber" && "bg-amber-600 text-white",
+                  badge.color === "red" && "bg-red-600 text-white"
                 )}
               >
-                {item.badge}
+                {badge.count}
               </span>
             )}
           </Link>
@@ -72,14 +94,23 @@ function NavSection({
 interface SupplierSidebarContentProps {
   /** Called on link click — used by mobile drawer to close itself. */
   onNavigate?: () => void;
+  /** Real logged-in supplier-side user. Falls back to a placeholder. */
+  user?: SupplierSidebarUser;
+  /** Live badge counts keyed by route. */
+  badges?: SupplierBadges;
 }
 
 /**
  * Inner content of the supplier sidebar — shared by the desktop
  * <SupplierSidebar /> and the mobile drawer. The wrapper supplies positioning.
  */
-export function SupplierSidebarContent({ onNavigate }: SupplierSidebarContentProps) {
+export function SupplierSidebarContent({
+  onNavigate,
+  user,
+  badges,
+}: SupplierSidebarContentProps) {
   const pathname = usePathname();
+  const u = user ?? FALLBACK_SUPPLIER_USER;
 
   return (
     <>
@@ -110,24 +141,28 @@ export function SupplierSidebarContent({ onNavigate }: SupplierSidebarContentPro
           items={supplierNavMain}
           currentPath={pathname}
           onNavigate={onNavigate}
+          badges={badges}
         />
         <NavSection
           label="Sotuv"
           items={supplierNavSales}
           currentPath={pathname}
           onNavigate={onNavigate}
+          badges={badges}
         />
         <NavSection
           label="Analitika"
           items={supplierNavAnalytics}
           currentPath={pathname}
           onNavigate={onNavigate}
+          badges={badges}
         />
         <NavSection
           label="Profil"
           items={supplierNavProfile}
           currentPath={pathname}
           onNavigate={onNavigate}
+          badges={badges}
         />
       </nav>
 
@@ -144,11 +179,11 @@ export function SupplierSidebarContent({ onNavigate }: SupplierSidebarContentPro
           )}
         >
           <div className="size-8 grid place-items-center rounded-full bg-emerald-600 text-xs font-bold shrink-0">
-            AT
+            {u.initials}
           </div>
           <div className="text-xs min-w-0 flex-1">
-            <div className="font-semibold leading-none truncate">Asror Tursunov</div>
-            <div className="text-white/50 mt-1 truncate">Sales Director</div>
+            <div className="font-semibold leading-none truncate">{u.fullName}</div>
+            <div className="text-white/50 mt-1 truncate">{u.roleLabel}</div>
           </div>
         </Link>
         <Link
@@ -165,10 +200,16 @@ export function SupplierSidebarContent({ onNavigate }: SupplierSidebarContentPro
   );
 }
 
-export function SupplierSidebar() {
+export function SupplierSidebar({
+  user,
+  badges,
+}: {
+  user?: SupplierSidebarUser;
+  badges?: SupplierBadges;
+}) {
   return (
     <aside className="hidden lg:flex w-60 shrink-0 flex-col bg-navy-900 text-white">
-      <SupplierSidebarContent />
+      <SupplierSidebarContent user={user} badges={badges} />
     </aside>
   );
 }

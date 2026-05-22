@@ -11,15 +11,15 @@ import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  getSupplierKpi,
-  getSupplierStores,
-  getSupplierCompany,
-  getOutgoingInvoices,
-  getDemandSignals,
-  getSupplierProducts,
-  getDeliveryRoutes,
-} from "@/lib/store";
+import { supplierPortal, ApiError } from "@/lib/api";
+import type {
+  OutgoingInvoice,
+  SupplierCompany,
+  SupplierStore,
+  SupplierProduct,
+  DemandSignal,
+  DeliveryRoute,
+} from "@/lib/types";
 import { formatSom, formatNumber, cn } from "@/lib/utils";
 
 // Deterministic avatar bg from id
@@ -59,7 +59,7 @@ function timeOnly(iso: string): string {
 }
 
 // Build deterministic 30-day series from invoices already in store
-function buildDailySeries(invoices: ReturnType<typeof getOutgoingInvoices>) {
+function buildDailySeries(invoices: OutgoingInvoice[]) {
   const now = new Date("2026-05-21T10:00:00Z").getTime();
   const DAY = 86400000;
   const bins: { dayIndex: number; total: number }[] = [];
@@ -77,14 +77,60 @@ function buildDailySeries(invoices: ReturnType<typeof getOutgoingInvoices>) {
   return bins.reverse(); // oldest → newest left to right
 }
 
-export default function SupplierDashboardPage() {
-  const company = getSupplierCompany();
-  const kpi = getSupplierKpi();
-  const stores = getSupplierStores();
-  const invoices = getOutgoingInvoices();
-  const demand = getDemandSignals();
-  const products = getSupplierProducts();
-  const routes = getDeliveryRoutes();
+interface DashboardKpi {
+  activeStores: number;
+  totalStores: number;
+  todayInvoices: number;
+  outstandingPayments: number;
+  monthlyRevenue: number;
+}
+
+const EMPTY_KPI: DashboardKpi = {
+  activeStores: 0,
+  totalStores: 0,
+  todayInvoices: 0,
+  outstandingPayments: 0,
+  monthlyRevenue: 0,
+};
+
+export default async function SupplierDashboardPage() {
+  let company: SupplierCompany | null = null;
+  let kpi: DashboardKpi = EMPTY_KPI;
+  let stores: SupplierStore[] = [];
+  let invoices: OutgoingInvoice[] = [];
+  let demand: DemandSignal[] = [];
+  let products: SupplierProduct[] = [];
+  let routes: DeliveryRoute[] = [];
+  let loadError: string | null = null;
+
+  try {
+    const [
+      companyRes,
+      kpiRes,
+      storesRes,
+      invoicesRes,
+      demandRes,
+      productsRes,
+      routesRes,
+    ] = await Promise.all([
+      supplierPortal.company.get(),
+      supplierPortal.kpi.dashboard(),
+      supplierPortal.stores.list({ limit: 8 }),
+      supplierPortal.invoices.list({ limit: 5 }),
+      supplierPortal.demandSignals.list({ limit: 6 }),
+      supplierPortal.products.list({ limit: 8 }),
+      supplierPortal.routes.list({ limit: 5 }),
+    ]);
+    company = companyRes;
+    kpi = kpiRes;
+    stores = storesRes.results;
+    invoices = invoicesRes.results;
+    demand = demandRes.results;
+    products = productsRes.results;
+    routes = routesRes.results;
+  } catch (e) {
+    loadError = e instanceof ApiError ? e.message : "Ma'lumotlarni yuklab bo'lmadi";
+  }
 
   const today = new Date("2026-05-21T10:00:00Z").toLocaleDateString("uz-UZ", {
     weekday: "long",
@@ -128,11 +174,16 @@ export default function SupplierDashboardPage() {
 
       <main className="flex-1 overflow-y-auto bg-surface px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-7xl">
+          {loadError && (
+            <Alert variant="error" className="mb-4">
+              {loadError}
+            </Alert>
+          )}
           {/* Welcome row */}
           <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-ink-900">
-                Salom, {company.name}{" "}
+                Salom, {company?.name ?? "Ta'minotchi"}{" "}
                 <span className="inline-block animate-pulse">👋</span>
               </h1>
               <p className="mt-1 font-mono text-[13px] text-ink-500 capitalize">
@@ -161,8 +212,7 @@ export default function SupplierDashboardPage() {
             />
             <KpiCard
               label="Bugun yuborilgan"
-              value={kpi.todayInvoices > 0 ? kpi.todayInvoices : 12}
-              trend={{ value: "+4 kechagiga", direction: "up" }}
+              value={kpi.todayInvoices}
             />
             <KpiCard
               label="Kutilayotgan to'lov"

@@ -1,5 +1,8 @@
 "use server";
 
+// TODO(backend): insights endpoints (dismiss/act/dismissAll) not yet exposed.
+// Keep the in-memory store fallback until the backend ships /api/insights/*.
+
 import { revalidatePath } from "next/cache";
 import * as store from "../store";
 

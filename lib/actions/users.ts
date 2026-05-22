@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import * as store from "../store";
+import { users, ApiError } from "@/lib/api";
 import type { User } from "../types";
 
 function revalidate() {
@@ -10,30 +10,63 @@ function revalidate() {
 }
 
 export async function createUserAction(
-  data: Omit<User, "id" | "storeId" | "orgId" | "lastLogin" | "createdAt">
+  data: Omit<User, "id" | "storeId" | "orgId" | "lastLogin" | "createdAt">,
 ) {
-  const u = store.createUser(data);
-  revalidate();
-  return { ok: true, user: u };
+  try {
+    const u = await users.invite({
+      phone: data.phone,
+      fullName: data.fullName,
+      email: data.email,
+      role: data.role,
+    });
+    revalidate();
+    return { ok: true as const, user: u };
+  } catch (e) {
+    if (e instanceof ApiError) {
+      return { ok: false as const, error: e.message, code: e.code };
+    }
+    return { ok: false as const, error: "Foydalanuvchi qo'shilmadi" };
+  }
 }
 
 export async function updateUserAction(
   id: string,
-  patch: Partial<Omit<User, "id" | "storeId">>
+  patch: Partial<Omit<User, "id" | "storeId">>,
 ) {
-  const u = store.updateUser(id, patch);
-  revalidate();
-  return { ok: !!u, user: u };
+  try {
+    const u = await users.update(id, patch);
+    revalidate();
+    return { ok: true as const, user: u };
+  } catch (e) {
+    if (e instanceof ApiError) {
+      return { ok: false as const, error: e.message, code: e.code };
+    }
+    return { ok: false as const, error: "Tahrirlashda xato" };
+  }
 }
 
 export async function deleteUserAction(id: string) {
-  const ok = store.deleteUser(id);
-  revalidate();
-  return { ok };
+  try {
+    await users.remove(id);
+    revalidate();
+    return { ok: true as const };
+  } catch (e) {
+    if (e instanceof ApiError) {
+      return { ok: false as const, error: e.message, code: e.code };
+    }
+    return { ok: false as const, error: "O'chirishda xato" };
+  }
 }
 
 export async function toggleUserStatusAction(id: string) {
-  const u = store.toggleUserStatus(id);
-  revalidate();
-  return { ok: !!u, user: u };
+  try {
+    const u = await users.toggleStatus(id);
+    revalidate();
+    return { ok: true as const, user: u };
+  } catch (e) {
+    if (e instanceof ApiError) {
+      return { ok: false as const, error: e.message, code: e.code };
+    }
+    return { ok: false as const, error: "Status o'zgartirilmadi" };
+  }
 }

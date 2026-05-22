@@ -2,16 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import {
   ArrowLeft,
   Check,
   CheckCircle2,
-  Eye,
-  EyeOff,
+  Info,
   KeyRound,
   Loader2,
-  Lock,
   Send,
 } from "lucide-react";
 
@@ -20,6 +18,7 @@ import { Card } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
 import { Alert } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
+import { sendOtpAction, verifyOtpAction } from "@/lib/actions/auth";
 
 // ===================== HELPERS =====================
 
@@ -37,20 +36,19 @@ function formatPhone(raw: string): string {
   return parts.join(" ");
 }
 
+// 3 steps: 1=phone, 2=OTP, 3=notice (demo passwordless).
+// TODO(backend): /api/auth/reset-password/ — once shipped, restore the
+// password set/confirm step in place of the demo notice.
 type Step = 1 | 2 | 3;
 
 type FormState = {
   phone: string;
   otp: string;
-  password: string;
-  confirm: string;
 };
 
 const INITIAL: FormState = {
   phone: "",
   otp: "",
-  password: "",
-  confirm: "",
 };
 
 // ===================== PAGE =====================
@@ -60,23 +58,16 @@ export default function ForgotPasswordPage() {
   const [step, setStep] = useState<Step>(1);
   const [form, setForm] = useState<FormState>(INITIAL);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [showPwd, setShowPwd] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [pending, startTransition] = useTransition();
   const [resendIn, setResendIn] = useState(0);
 
   const otpRef = useRef<HTMLInputElement>(null);
-  const pwdRef = useRef<HTMLInputElement>(null);
 
   // Autofocus + resend countdown on step 2
   useEffect(() => {
     if (step === 2) {
       otpRef.current?.focus();
       setResendIn(60);
-    }
-    if (step === 3) {
-      pwdRef.current?.focus();
     }
   }, [step]);
 
@@ -94,13 +85,6 @@ export default function ForgotPasswordPage() {
   const phoneValid = phoneDigits.length === 9;
   const otpValid = form.otp.length === 6;
 
-  const pwdLenOk = form.password.length >= 8;
-  const pwdHasLetter = /[A-Za-zА-Яа-яЎўҚқҒғҲҳ]/.test(form.password);
-  const pwdHasDigit = /\d/.test(form.password);
-  const pwdComplexOk = pwdHasLetter && pwdHasDigit;
-  const pwdMatches = form.password.length > 0 && form.password === form.confirm;
-  const pwdValid = pwdLenOk && pwdComplexOk && pwdMatches;
-
   // ===== Step 1 → 2 =====
   function handleSendCode(e: FormEvent) {
     e.preventDefault();
@@ -109,11 +93,14 @@ export default function ForgotPasswordPage() {
       setError("Telefon raqam to'liq emas. +998 dan keyin 9 ta raqam bo'lishi kerak.");
       return;
     }
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    startTransition(async () => {
+      const res = await sendOtpAction(phoneDigits, "reset");
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
       setStep(2);
-    }, 600);
+    });
   }
 
   // ===== Step 2 → 3 =====
@@ -124,41 +111,24 @@ export default function ForgotPasswordPage() {
       setError("Tasdiqlash kodi 6 ta raqamdan iborat bo'lishi kerak.");
       return;
     }
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    startTransition(async () => {
+      const res = await verifyOtpAction(phoneDigits, form.otp, "reset");
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
       setStep(3);
-    }, 700);
+    });
   }
 
   function handleResend() {
     if (resendIn > 0) return;
     setResendIn(60);
     setError(null);
-  }
-
-  // ===== Step 3 → success =====
-  function handleSetPassword(e: FormEvent) {
-    e.preventDefault();
-    setError(null);
-    if (!pwdLenOk) {
-      setError("Parol kamida 8 ta belgidan iborat bo'lishi kerak.");
-      return;
-    }
-    if (!pwdComplexOk) {
-      setError("Parol kamida bitta harf va bitta raqam bo'lishi kerak.");
-      return;
-    }
-    if (!pwdMatches) {
-      setError("Parollar mos kelmaydi.");
-      return;
-    }
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setSuccess(true);
-      setTimeout(() => router.push("/login"), 1500);
-    }, 700);
+    startTransition(async () => {
+      const res = await sendOtpAction(phoneDigits, "reset");
+      if (!res.ok) setError(res.error);
+    });
   }
 
   function goBack() {
@@ -168,35 +138,11 @@ export default function ForgotPasswordPage() {
       update("otp", "");
     } else if (step === 3) {
       setStep(2);
-      update("password", "");
-      update("confirm", "");
     }
   }
 
-  // ===================== SUCCESS SCREEN =====================
-
-  if (success) {
-    return (
-      <div className="w-full max-w-[440px]">
-        <Card className="shadow-md">
-          <div className="flex flex-col items-center px-8 py-12 text-center">
-            <div className="grid size-14 place-items-center rounded-full bg-emerald-50">
-              <CheckCircle2 className="size-8 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <h2 className="mt-5 text-xl font-bold tracking-tight text-ink-900">
-              Parol muvaffaqiyatli o&apos;rnatildi
-            </h2>
-            <p className="mt-2 max-w-sm text-[14px] leading-relaxed text-ink-600">
-              Kirish sahifasiga o&apos;tilmoqda…
-            </p>
-            <div className="mt-6 flex items-center gap-2 font-mono text-[12px] text-ink-500">
-              <Loader2 className="size-3.5 animate-spin" />
-              Yo&apos;naltirilmoqda
-            </div>
-          </div>
-        </Card>
-      </div>
-    );
+  function goLogin() {
+    router.push("/login");
   }
 
   // ===================== RENDER =====================
@@ -211,7 +157,7 @@ export default function ForgotPasswordPage() {
         <h1 className="text-2xl font-bold tracking-tight text-ink-900">
           {step === 1 && "Parolni tiklash"}
           {step === 2 && "Tasdiqlash kodi"}
-          {step === 3 && "Yangi parol o'rnatish"}
+          {step === 3 && "Parolsiz autentifikatsiya"}
         </h1>
         <p className="mt-2 text-[13px] leading-relaxed text-ink-600">
           {step === 1 &&
@@ -223,7 +169,7 @@ export default function ForgotPasswordPage() {
             </>
           )}
           {step === 3 &&
-            "Kuchli parolni tanlang — kamida 8 ta belgi, harf va raqam."}
+            "Telefon raqamingiz tasdiqlandi. Tizimga bevosita kirishingiz mumkin."}
         </p>
       </div>
 
@@ -264,9 +210,9 @@ export default function ForgotPasswordPage() {
                 type="submit"
                 variant="primary"
                 className="h-11 w-full text-[15px]"
-                disabled={!phoneValid || loading}
+                disabled={!phoneValid || pending}
               >
-                {loading ? (
+                {pending ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />
                     Yuborilmoqda…
@@ -331,9 +277,9 @@ export default function ForgotPasswordPage() {
                 type="submit"
                 variant="primary"
                 className="h-11 w-full text-[15px]"
-                disabled={!otpValid || loading}
+                disabled={!otpValid || pending}
               >
-                {loading ? (
+                {pending ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />
                     Tekshirilmoqda…
@@ -358,102 +304,38 @@ export default function ForgotPasswordPage() {
           )}
 
           {step === 3 && (
-            <form onSubmit={handleSetPassword} className="space-y-5">
-              <div>
-                <Label htmlFor="password">Yangi parol</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    ref={pwdRef}
-                    type={showPwd ? "text" : "password"}
-                    autoComplete="new-password"
-                    placeholder="Kamida 8 ta belgi"
-                    value={form.password}
-                    onChange={(e) => update("password", e.target.value)}
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPwd((v) => !v)}
-                    className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-sm text-ink-400 hover:text-ink-700"
-                    aria-label={showPwd ? "Parolni yashirish" : "Parolni ko'rsatish"}
-                  >
-                    {showPwd ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                  </button>
+            <div className="space-y-5">
+              <div className="flex flex-col items-center text-center">
+                <div className="grid size-14 place-items-center rounded-full bg-emerald-50">
+                  <CheckCircle2 className="size-8 text-emerald-600 dark:text-emerald-400" />
                 </div>
-                {form.password.length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    <Requirement ok={pwdLenOk} text="Kamida 8 ta belgi" />
-                    <Requirement
-                      ok={pwdComplexOk}
-                      text="Kamida bitta harf va bitta raqam"
-                    />
-                  </div>
-                )}
+                <h2 className="mt-4 text-[16px] font-bold tracking-tight text-ink-900">
+                  Telefon raqamingiz tasdiqlandi
+                </h2>
               </div>
 
-              <div>
-                <Label htmlFor="confirm">Parolni tasdiqlash</Label>
-                <div className="relative">
-                  <Input
-                    id="confirm"
-                    type={showConfirm ? "text" : "password"}
-                    autoComplete="new-password"
-                    placeholder="Parolni qayta kiriting"
-                    value={form.confirm}
-                    onChange={(e) => update("confirm", e.target.value)}
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirm((v) => !v)}
-                    className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-sm text-ink-400 hover:text-ink-700"
-                    aria-label={
-                      showConfirm ? "Parolni yashirish" : "Parolni ko'rsatish"
-                    }
-                  >
-                    {showConfirm ? (
-                      <EyeOff className="size-4" />
-                    ) : (
-                      <Eye className="size-4" />
-                    )}
-                  </button>
-                </div>
-                {form.confirm.length > 0 && !pwdMatches && (
-                  <p className="mt-2 text-[11px] text-red-600 dark:text-red-400">
-                    Parollar mos kelmaydi
-                  </p>
-                )}
-              </div>
+              <Alert variant="info">
+                <span className="flex items-start gap-2">
+                  <Info className="mt-0.5 size-4 shrink-0" />
+                  <span>
+                    <strong>Demo:</strong> parolsiz autentifikatsiya — RetailFlow
+                    tizimida har safar SMS kodi orqali kirasiz. Parolni o&apos;rnatish
+                    talab qilinmaydi. Kirish sahifasiga qaytaring va telefon raqamingiz
+                    bilan davom eting.
+                  </span>
+                </span>
+              </Alert>
 
               <Button
-                type="submit"
-                variant="emerald"
-                className="h-11 w-full text-[15px]"
-                disabled={!pwdValid || loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="size-4 animate-spin" />
-                    Saqlanmoqda…
-                  </>
-                ) : (
-                  <>
-                    <Lock className="size-4" />
-                    Parolni o&apos;rnatish
-                  </>
-                )}
-              </Button>
-
-              <button
                 type="button"
-                onClick={goBack}
-                className="flex w-full items-center justify-center gap-1.5 text-[13px] font-medium text-ink-600 hover:text-ink-900"
+                variant="primary"
+                onClick={goLogin}
+                className="h-11 w-full text-[15px]"
               >
-                <ArrowLeft className="size-3.5" />
-                Orqaga
-              </button>
-            </form>
+                Kirish sahifasiga qaytish
+                <ArrowLeft className="size-4 rotate-180" />
+              </Button>
+            </div>
           )}
         </div>
       </Card>
@@ -502,27 +384,6 @@ function DotsProgress({ current }: { current: Step }) {
           );
         })}
       </div>
-    </div>
-  );
-}
-
-function Requirement({ ok, text }: { ok: boolean; text: string }) {
-  return (
-    <div
-      className={cn(
-        "flex items-center gap-1.5 text-[11px]",
-        ok ? "text-emerald-700 dark:text-emerald-300" : "text-ink-500"
-      )}
-    >
-      <span
-        className={cn(
-          "grid size-3.5 place-items-center rounded-full border",
-          ok ? "border-emerald-600 bg-emerald-600" : "border-ink-300"
-        )}
-      >
-        {ok && <Check className="size-2.5 text-white" />}
-      </span>
-      {text}
     </div>
   );
 }

@@ -17,13 +17,15 @@ import {
 } from "lucide-react";
 import { SupplierTopbar } from "@/components/supplier/supplier-topbar";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  getSupplierStores,
-  getOverduePayments,
-  getDemandSignals,
-  getSupplierProducts,
-} from "@/lib/store";
+import { supplierPortal, ApiError } from "@/lib/api";
+import type {
+  SupplierStore,
+  PaymentRecord,
+  DemandSignal,
+  SupplierProduct,
+} from "@/lib/types";
 import { formatSom, formatNumber, cn } from "@/lib/utils";
 
 const NOW_MS = new Date("2026-05-21T10:00:00Z").getTime();
@@ -33,11 +35,29 @@ function daysSince(iso: string): number {
   return Math.floor((NOW_MS - new Date(iso).getTime()) / DAY_MS);
 }
 
-export default function SupplierInsightsPage() {
-  const stores = getSupplierStores();
-  const overdue = getOverduePayments();
-  const signals = getDemandSignals();
-  const products = getSupplierProducts();
+export default async function SupplierInsightsPage() {
+  let stores: SupplierStore[] = [];
+  let overdue: PaymentRecord[] = [];
+  let signals: DemandSignal[] = [];
+  let products: SupplierProduct[] = [];
+  let loadError: string | null = null;
+  try {
+    // Insights endpoint is also fetched (warming/logging server-side analytics)
+    // but the page renders from raw lists so it has fine-grained control.
+    const [storesRes, paymentsRes, signalsRes, productsRes] = await Promise.all([
+      supplierPortal.stores.list({ limit: 200 }),
+      supplierPortal.payments.list({ status: "overdue", limit: 100 }),
+      supplierPortal.demandSignals.list({ limit: 100 }),
+      supplierPortal.products.list({ limit: 200 }),
+      supplierPortal.insights.get().catch(() => null),
+    ]);
+    stores = storesRes.results;
+    overdue = paymentsRes.results;
+    signals = signalsRes.results;
+    products = productsRes.results;
+  } catch (e) {
+    loadError = e instanceof ApiError ? e.message : "Insights yuklab bo'lmadi";
+  }
 
   // CHURN risk — stores that were active (high reliability) but no order > 14d
   const churnRisk = stores
@@ -90,6 +110,11 @@ export default function SupplierInsightsPage() {
 
       <main className="flex-1 overflow-y-auto bg-surface px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-7xl">
+          {loadError && (
+            <Alert variant="error" className="mb-4">
+              {loadError}
+            </Alert>
+          )}
           {/* Header */}
           <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
             <div>

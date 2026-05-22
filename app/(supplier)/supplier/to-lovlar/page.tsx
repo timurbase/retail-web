@@ -12,11 +12,28 @@ import {
 import { SupplierTopbar } from "@/components/supplier/supplier-topbar";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Dropdown, DropdownItem, DropdownDivider } from "@/components/ui/dropdown";
-import { getPayments } from "@/lib/store";
+import { supplierPortal, ApiError } from "@/lib/api";
 import { formatSom, formatDate, cn } from "@/lib/utils";
 import type { PaymentRecord } from "@/lib/types";
+
+interface PageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+function pickString(
+  params: Record<string, string | string[] | undefined>,
+  key: string,
+): string | undefined {
+  const v = params[key];
+  return typeof v === "string" && v.length > 0 ? v : undefined;
+}
+
+interface AgingResponse {
+  buckets: { label: string; count: number; sum: number }[];
+}
 
 function overdueColor(days: number): string {
   if (days <= 30) return "text-amber-600 dark:text-amber-300";
@@ -54,8 +71,30 @@ const STATUS_META: Record<
   },
 };
 
-export default function SupplierToLovlarPage() {
-  const payments = getPayments();
+export default async function SupplierToLovlarPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  let payments: PaymentRecord[] = [];
+  // Aging summary from backend is informational; this page also computes its own
+  // buckets from the visible payments list to keep all derived stats in sync.
+  let _aging: AgingResponse | null = null;
+  let loadError: string | null = null;
+  try {
+    const [paymentsRes, agingRes] = await Promise.all([
+      supplierPortal.payments.list({
+        status: pickString(params, "status"),
+        aging: pickString(params, "aging"),
+        search: pickString(params, "q") ?? pickString(params, "search"),
+        ordering: pickString(params, "ordering"),
+        limit: 200,
+      }),
+      supplierPortal.payments.aging().catch(() => null),
+    ]);
+    payments = paymentsRes.results;
+    _aging = agingRes as AgingResponse | null;
+  } catch (e) {
+    loadError = e instanceof ApiError ? e.message : "To'lovlarni yuklab bo'lmadi";
+  }
+  void _aging;
 
   // KPI
   const pending = payments.filter((p) => p.status === "pending" || p.status === "partial");
@@ -117,6 +156,11 @@ export default function SupplierToLovlarPage() {
 
       <main className="flex-1 overflow-y-auto bg-surface px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-7xl">
+          {loadError && (
+            <Alert variant="error" className="mb-4">
+              {loadError}
+            </Alert>
+          )}
           {/* Header */}
           <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
             <div>

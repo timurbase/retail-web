@@ -397,7 +397,7 @@ export default function LandingPage() {
             />
             <PricingCard
               name="Pro"
-              price="299,000"
+              price="412,000"
               priceNote="so'm / oy (6 oy keyin)"
               features={[
                 "Hammasi Beta'da",

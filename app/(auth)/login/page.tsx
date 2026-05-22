@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -20,10 +20,16 @@ import { Alert } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/lib/types";
+import {
+  sendOtpAction,
+  verifyOtpAction,
+  selectStoreAction,
+  selectSupplierAction,
+  type Membership,
+} from "@/lib/actions/auth";
 
 type Step = "phone" | "otp";
 
-// Format 9 raqamni "XX XXX XX XX" ko'rinishida ajratish
 function formatPhone(raw: string): string {
   const digits = raw.replace(/\D/g, "").slice(0, 9);
   const parts: string[] = [];
@@ -38,6 +44,38 @@ function digitsOnly(raw: string): string {
   return raw.replace(/\D/g, "");
 }
 
+function membershipPortal(m: Membership): "store" | "supplier" | "soliq" | undefined {
+  if (m.portal) return m.portal;
+  if (m.supplier || m.tenant_id || m.tenantId) return "supplier";
+  if (m.store || m.store_id || m.storeId) return "store";
+  return undefined;
+}
+
+function membershipId(m: Membership): string | undefined {
+  return (
+    m.store_id ??
+    m.storeId ??
+    m.store?.id ??
+    m.tenant_id ??
+    m.tenantId ??
+    m.supplier?.id ??
+    (m.id as string | undefined)
+  );
+}
+
+function mapErrorCode(code: string | undefined, fallback: string): string {
+  switch (code) {
+    case "no_user":
+      return "Bu telefon ro'yxatdan o'tmagan. Avval ro'yxatdan o'ting.";
+    case "invalid":
+      return "Kod noto'g'ri yoki muddati o'tgan";
+    case "too_many_attempts":
+      return "Juda ko'p urinish. Yangi kod so'rang.";
+    default:
+      return fallback;
+  }
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const { info } = useToast();
@@ -46,12 +84,11 @@ export default function LoginPage() {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [pending, startTransition] = useTransition();
   const [resendIn, setResendIn] = useState(0);
 
   const otpInputRef = useRef<HTMLInputElement>(null);
 
-  // OTP step'ga o'tganda autofocus + countdown boshlash
   useEffect(() => {
     if (step === "otp") {
       otpInputRef.current?.focus();
@@ -59,7 +96,6 @@ export default function LoginPage() {
     }
   }, [step]);
 
-  // Resend countdown
   useEffect(() => {
     if (resendIn <= 0) return;
     const t = setTimeout(() => setResendIn((s) => s - 1), 1000);
@@ -77,12 +113,14 @@ export default function LoginPage() {
       setError("Telefon raqam to'liq emas. +998 dan keyin 9 ta raqam bo'lishi kerak.");
       return;
     }
-    setLoading(true);
-    // Mock SMS yuborish — 600ms kechikish
-    setTimeout(() => {
-      setLoading(false);
+    startTransition(async () => {
+      const res = await sendOtpAction(phoneDigits, "login");
+      if (!res.ok) {
+        setError(mapErrorCode(res.code, res.error));
+        return;
+      }
       setStep("otp");
-    }, 600);
+    });
   }
 
   function handleVerifyOtp(e: FormEvent) {
@@ -92,25 +130,73 @@ export default function LoginPage() {
       setError("Tasdiqlash kodi 6 ta raqamdan iborat bo'lishi kerak.");
       return;
     }
-    setLoading(true);
-    // Mock OTP tekshiruvi — 700ms
-    setTimeout(() => {
-      setLoading(false);
-      if (role === "supplier") {
-        router.push("/supplier/dashboard");
-      } else if (role === "soliq") {
-        router.push("/soliq/dashboard");
-      } else {
-        router.push("/dashboard");
+    startTransition(async () => {
+      const res = await verifyOtpAction(phoneDigits, otp, "login");
+      if (!res.ok) {
+        setError(mapErrorCode(res.code, res.error));
+        return;
       }
-    }, 700);
+
+      const memberships = res.memberships ?? [];
+      if (memberships.length === 0) {
+        setError(
+          "Bu telefon hech qaysi portalga biriktirilmagan. Ro'yxatdan o'ting.",
+        );
+        return;
+      }
+
+      // Filter memberships by the chosen role (the segmented control).
+      const filtered =
+        role === "soliq"
+          ? memberships.filter((m) => membershipPortal(m) === "soliq")
+          : memberships.filter((m) => membershipPortal(m) === role);
+
+      if (filtered.length === 0) {
+        const roleLabel =
+          role === "store"
+            ? "Korxona"
+            : role === "supplier"
+              ? "Ta'minotchi"
+              : "Soliq";
+        setError(
+          `${roleLabel} portali uchun ushbu telefonda hisob topilmadi. Boshqa rol tanlang yoki ro'yxatdan o'ting.`,
+        );
+        return;
+      }
+
+      if (filtered.length === 1) {
+        const m = filtered[0];
+        const portal = membershipPortal(m);
+        const id = membershipId(m);
+        if (!id) {
+          setError("Hisob ma'lumotlari to'liq emas. Yordamga murojaat qiling.");
+          return;
+        }
+        const selectRes =
+          portal === "supplier"
+            ? await selectSupplierAction(id)
+            : await selectStoreAction(id);
+        if (!selectRes.ok) {
+          setError(selectRes.error);
+          return;
+        }
+        router.push(portal === "supplier" ? "/supplier/dashboard" : "/dashboard");
+        return;
+      }
+
+      // Multiple memberships for the chosen portal → let the user pick.
+      router.push("/select-portal");
+    });
   }
 
   function handleResend() {
     if (resendIn > 0) return;
     setResendIn(60);
     setError(null);
-    // Mock qayta yuborish
+    startTransition(async () => {
+      const res = await sendOtpAction(phoneDigits, "login");
+      if (!res.ok) setError(mapErrorCode(res.code, res.error));
+    });
   }
 
   function handleBackToPhone() {
@@ -122,7 +208,7 @@ export default function LoginPage() {
   function handleEimzo() {
     info(
       "E-IMZO integratsiyasi tayyorlanmoqda",
-      "Yangilanish haqida xabar olish uchun email manzilingizni qoldiring."
+      "Yangilanish haqida xabar olish uchun email manzilingizni qoldiring.",
     );
   }
 
@@ -232,9 +318,9 @@ export default function LoginPage() {
                 type="submit"
                 variant="primary"
                 className="h-11 w-full text-[15px]"
-                disabled={!phoneValid || loading}
+                disabled={!phoneValid || pending}
               >
-                {loading ? (
+                {pending ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />
                     Yuborilmoqda…
@@ -316,9 +402,9 @@ export default function LoginPage() {
                 type="submit"
                 variant="primary"
                 className="h-11 w-full text-[15px]"
-                disabled={!otpValid || loading}
+                disabled={!otpValid || pending}
               >
-                {loading ? (
+                {pending ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />
                     Tekshirilmoqda…

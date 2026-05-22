@@ -10,10 +10,15 @@ import {
 import { SupplierTopbar } from "@/components/supplier/supplier-topbar";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { getDeliveryRoutes } from "@/lib/store";
+import { supplierPortal, ApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import type { DeliveryRoute } from "@/lib/types";
+
+interface PageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
 
 const AVATAR_PALETTE = [
   "bg-navy-700",
@@ -226,8 +231,17 @@ function RouteCard({ route, collapsed }: { route: DeliveryRoute; collapsed?: boo
   );
 }
 
-export default function SupplierLogistikaPage() {
-  const routes = getDeliveryRoutes();
+export default async function SupplierLogistikaPage({ searchParams }: PageProps) {
+  // TODO: backend RoutesListParams lacks status/search; surface as no-op for now.
+  await searchParams;
+  let routes: DeliveryRoute[] = [];
+  let loadError: string | null = null;
+  try {
+    const res = await supplierPortal.routes.list({ limit: 100 });
+    routes = res.results;
+  } catch (e) {
+    loadError = e instanceof ApiError ? e.message : "Marshrutlarni yuklab bo'lmadi";
+  }
 
   // KPI
   const total = routes.length;
@@ -246,6 +260,11 @@ export default function SupplierLogistikaPage() {
 
       <main className="flex-1 overflow-y-auto bg-surface px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-7xl">
+          {loadError && (
+            <Alert variant="error" className="mb-4">
+              {loadError}
+            </Alert>
+          )}
           {/* Header */}
           <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
             <div>

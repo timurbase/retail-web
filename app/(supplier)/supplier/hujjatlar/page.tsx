@@ -11,14 +11,28 @@ import {
 
 import { SupplierTopbar } from "@/components/supplier/supplier-topbar";
 import { Card } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { KpiCard } from "@/components/dashboard/kpi-card";
-import {
-  getOutgoingInvoices,
-  getSupplierStore,
-} from "@/lib/store";
-import type { OutgoingInvoiceStatus } from "@/lib/types";
+import { supplierPortal, ApiError } from "@/lib/api";
+import type {
+  OutgoingInvoice,
+  OutgoingInvoiceStatus,
+  SupplierStore,
+} from "@/lib/types";
 import { formatSom, formatDate, cn } from "@/lib/utils";
+
+interface PageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+function pickString(
+  params: Record<string, string | string[] | undefined>,
+  key: string,
+): string | undefined {
+  const v = params[key];
+  return typeof v === "string" && v.length > 0 ? v : undefined;
+}
 
 const statusStyles: Record<OutgoingInvoiceStatus, string> = {
   draft: "bg-ink-100 border-ink-400 text-ink-600",
@@ -60,8 +74,31 @@ const TABS: { key: OutgoingInvoiceStatus | "all"; label: string }[] = [
 const NOW = new Date("2026-05-21T10:00:00Z").getTime();
 const DAY = 86400000;
 
-export default function HujjatlarListPage() {
-  const invoices = getOutgoingInvoices();
+export default async function HujjatlarListPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  let invoices: OutgoingInvoice[] = [];
+  let stores: SupplierStore[] = [];
+  let totalCount = 0;
+  let loadError: string | null = null;
+  try {
+    const [invRes, storesRes] = await Promise.all([
+      supplierPortal.invoices.list({
+        status: pickString(params, "status"),
+        search: pickString(params, "q") ?? pickString(params, "search"),
+        from: pickString(params, "from"),
+        to: pickString(params, "to"),
+        ordering: pickString(params, "ordering"),
+      }),
+      supplierPortal.stores.list({ limit: 200 }),
+    ]);
+    invoices = invRes.results;
+    totalCount = invRes.count ?? invRes.results.length;
+    stores = storesRes.results;
+  } catch (e) {
+    loadError = e instanceof ApiError ? e.message : "Hujjatlarni yuklab bo'lmadi";
+  }
+
+  const storeById = new Map(stores.map((s) => [s.id, s]));
 
   // Counts per status
   const counts: Record<string, number> = { all: invoices.length };
@@ -102,6 +139,11 @@ export default function HujjatlarListPage() {
 
       <main className="flex-1 overflow-y-auto bg-surface px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-7xl">
+          {loadError && (
+            <Alert variant="error" className="mb-4">
+              {loadError}
+            </Alert>
+          )}
           {/* Header */}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -111,7 +153,7 @@ export default function HujjatlarListPage() {
               <p className="mt-1 text-[13px] text-ink-500">
                 Do&apos;konlarga jo&apos;natilgan invoice&apos;lar — jami{" "}
                 <span className="font-mono font-semibold text-ink-700">
-                  {invoices.length} ta
+                  {totalCount} ta
                 </span>
               </p>
             </div>
@@ -221,7 +263,7 @@ export default function HujjatlarListPage() {
             ) : (
               <div>
                 {visible.map((inv) => {
-                  const store = getSupplierStore(inv.storeId);
+                  const store = storeById.get(inv.storeId);
                   const isDeliveredLate =
                     inv.status === "delivered" &&
                     new Date(inv.sentAt).getTime() <= NOW - 7 * DAY &&
@@ -323,7 +365,7 @@ export default function HujjatlarListPage() {
                 <span className="font-semibold text-ink-700">
                   1–{visible.length}
                 </span>{" "}
-                / {invoices.length}
+                / {totalCount}
               </span>
               <div className="flex items-center gap-1">
                 <button

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import * as store from "../store";
+import { company, ApiError } from "@/lib/api";
 import type { CompanyInfo } from "../types";
 
 function revalidate() {
@@ -10,9 +10,16 @@ function revalidate() {
 }
 
 export async function updateCompanyAction(
-  patch: Partial<Omit<CompanyInfo, "storeId">>
+  patch: Partial<Omit<CompanyInfo, "storeId">>,
 ) {
-  const c = store.updateCompany(patch);
-  revalidate();
-  return { ok: true, company: c };
+  try {
+    const c = await company.patch(patch);
+    revalidate();
+    return { ok: true as const, company: c };
+  } catch (e) {
+    if (e instanceof ApiError) {
+      return { ok: false as const, error: e.message, code: e.code };
+    }
+    return { ok: false as const, error: "Saqlashda xato" };
+  }
 }

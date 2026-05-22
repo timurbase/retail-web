@@ -25,11 +25,12 @@ import {
   DropdownItem,
 } from "@/components/ui/dropdown";
 import { KpiCard } from "@/components/dashboard/kpi-card";
-import {
-  getOutgoingInvoice,
-  getSupplierStore,
-} from "@/lib/store";
-import type { OutgoingInvoiceStatus } from "@/lib/types";
+import { supplierPortal, ApiError } from "@/lib/api";
+import type {
+  OutgoingInvoice,
+  OutgoingInvoiceStatus,
+  SupplierStore,
+} from "@/lib/types";
 import { formatSom, formatDate, formatNumber, cn } from "@/lib/utils";
 
 interface PageProps {
@@ -102,12 +103,27 @@ function fmtDateTime(iso: string): string {
   return `${dd}.${mm}.${yyyy} ${hh}:${mi}`;
 }
 
+type InvoiceWithStore = OutgoingInvoice & { store?: SupplierStore | null };
+
 export default async function InvoiceDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const inv = getOutgoingInvoice(id);
-  if (!inv) notFound();
+  let inv: InvoiceWithStore;
+  try {
+    inv = (await supplierPortal.invoices.get(id)) as InvoiceWithStore;
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
 
-  const store = getSupplierStore(inv.storeId);
+  // Backend serializer should embed `store`. If not, fetch separately.
+  let store: SupplierStore | null = inv.store ?? null;
+  if (!store && inv.storeId) {
+    try {
+      store = await supplierPortal.stores.get(inv.storeId);
+    } catch {
+      store = null;
+    }
+  }
   const currentStep = statusToStepIndex(inv.status);
 
   // Build timeline timestamps deterministically based on sentAt

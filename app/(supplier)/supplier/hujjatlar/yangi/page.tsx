@@ -1,18 +1,26 @@
 import { SupplierTopbar } from "@/components/supplier/supplier-topbar";
 import { NewInvoiceForm } from "@/components/supplier/new-invoice-form";
-import {
-  getSupplierStores,
-  getSupplierProducts,
-  getOutgoingInvoices,
-} from "@/lib/store";
+import { Alert } from "@/components/ui/alert";
+import { supplierPortal, ApiError } from "@/lib/api";
+import type { SupplierProduct, SupplierStore } from "@/lib/types";
 
 export default async function NewInvoicePage() {
-  const stores = getSupplierStores();
-  const products = getSupplierProducts();
-  const invoices = getOutgoingInvoices();
+  let stores: SupplierStore[] = [];
+  let products: SupplierProduct[] = [];
+  let loadError: string | null = null;
+  try {
+    const [storesRes, productsRes] = await Promise.all([
+      supplierPortal.stores.list({ limit: 200 }),
+      supplierPortal.products.list({ limit: 500 }),
+    ]);
+    stores = storesRes.results;
+    products = productsRes.results;
+  } catch (e) {
+    loadError = e instanceof ApiError ? e.message : "Ma'lumotlarni yuklab bo'lmadi";
+  }
 
-  const nextNum = invoices.length + 1;
-  const nextNumber = `AD-2026-${String(nextNum).padStart(4, "0")}`;
+  // Backend assigns invoice number on create — placeholder shown to the user.
+  const nextNumber = "AD-2026-XXXX";
 
   return (
     <>
@@ -25,6 +33,11 @@ export default async function NewInvoicePage() {
 
       <main className="flex-1 overflow-y-auto bg-surface px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-5xl">
+          {loadError && (
+            <Alert variant="error" className="mb-4">
+              {loadError}
+            </Alert>
+          )}
           <div className="mb-6">
             <div className="mb-2 font-mono text-[11px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
               Yangi yuborish

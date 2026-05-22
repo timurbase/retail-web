@@ -12,7 +12,7 @@ import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { NewOrderButton } from "@/components/buyurtmalar/new-order-button";
-import { getSuppliers, getProducts } from "@/lib/store";
+import { suppliers as suppliersApi, products as productsApi, ApiError } from "@/lib/api";
 import { cn, formatSom } from "@/lib/utils";
 
 type OrderStatus =
@@ -315,7 +315,7 @@ const TABS = [
   { key: "cancelled", label: "Bekor qilingan" },
 ];
 
-export default function BuyurtmalarPage() {
+export default async function BuyurtmalarPage() {
   const activeCount = ORDERS.filter(
     (o) =>
       o.status === "sent" ||
@@ -324,8 +324,19 @@ export default function BuyurtmalarPage() {
   ).length;
   const lateCount = ORDERS.filter((o) => o.lateDays && o.lateDays > 0).length;
 
-  const suppliers = getSuppliers();
-  const products = getProducts();
+  let suppliers: Awaited<ReturnType<typeof suppliersApi.list>>["results"] = [];
+  let products: Awaited<ReturnType<typeof productsApi.list>>["results"] = [];
+  try {
+    const [sRes, pRes] = await Promise.all([
+      suppliersApi.list(),
+      productsApi.list(),
+    ]);
+    suppliers = sRes.results;
+    products = pRes.results;
+  } catch (e) {
+    if (!(e instanceof ApiError)) throw e;
+    // Soft-fail: page is mostly mock UI; new-order modal just gets empty lists.
+  }
 
   return (
     <>

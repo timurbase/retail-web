@@ -4,18 +4,43 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { navMain, navAi, navAnalytics, type NavItem } from "./nav-items";
+import {
+  navMain,
+  navAi,
+  navAnalytics,
+  type NavItem,
+  type SidebarBadges,
+} from "./nav-items";
+
+export type { SidebarBadges };
+
+export interface SidebarUser {
+  /** Full name shown in the footer (e.g. "Aziz Karimov"). */
+  fullName: string;
+  /** Localised role label (e.g. "Omborchi"). */
+  roleLabel: string;
+  /** Two-letter avatar initials. */
+  initials: string;
+}
+
+const FALLBACK_USER: SidebarUser = {
+  fullName: "Foydalanuvchi",
+  roleLabel: "Hisob",
+  initials: "?",
+};
 
 function NavSection({
   label,
   items,
   currentPath,
   onNavigate,
+  badges,
 }: {
   label: string;
   items: NavItem[];
   currentPath: string;
   onNavigate?: () => void;
+  badges?: SidebarBadges;
 }) {
   return (
     <div>
@@ -28,6 +53,8 @@ function NavSection({
             ? currentPath === "/dashboard"
             : currentPath.startsWith(item.href);
         const Icon = item.icon;
+        const badge = badges?.[item.href];
+        const showBadge = badge && badge.count > 0;
         return (
           <Link
             key={item.href}
@@ -44,15 +71,16 @@ function NavSection({
               <Icon className="size-4" />
               {item.label}
             </span>
-            {item.badge !== undefined && (
+            {showBadge && (
               <span
                 className={cn(
                   "rounded-full px-1.5 py-0.5 text-[10px] font-bold font-mono leading-none",
-                  item.badgeColor === "emerald" && "bg-emerald-600 text-white",
-                  item.badgeColor === "amber" && "bg-amber-600 text-white"
+                  badge.color === "emerald" && "bg-emerald-600 text-white",
+                  badge.color === "amber" && "bg-amber-600 text-white",
+                  badge.color === "red" && "bg-red-600 text-white"
                 )}
               >
-                {item.badge}
+                {badge.count}
               </span>
             )}
           </Link>
@@ -65,6 +93,10 @@ function NavSection({
 interface SidebarContentProps {
   /** Called on link click — used by mobile drawer to close itself. */
   onNavigate?: () => void;
+  /** Real logged-in user from the layout. Falls back to a placeholder. */
+  user?: SidebarUser;
+  /** Live badge counts keyed by route. */
+  badges?: SidebarBadges;
 }
 
 /**
@@ -72,8 +104,13 @@ interface SidebarContentProps {
  * mobile drawer. Renders brand + nav + user footer; the wrapper supplies the
  * positioning/size.
  */
-export function SidebarContent({ onNavigate }: SidebarContentProps) {
+export function SidebarContent({
+  onNavigate,
+  user,
+  badges,
+}: SidebarContentProps) {
   const pathname = usePathname();
+  const u = user ?? FALLBACK_USER;
 
   return (
     <>
@@ -94,9 +131,27 @@ export function SidebarContent({ onNavigate }: SidebarContentProps) {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-2">
-        <NavSection label="Asosiy" items={navMain} currentPath={pathname} onNavigate={onNavigate} />
-        <NavSection label="AI" items={navAi} currentPath={pathname} onNavigate={onNavigate} />
-        <NavSection label="Analitika" items={navAnalytics} currentPath={pathname} onNavigate={onNavigate} />
+        <NavSection
+          label="Asosiy"
+          items={navMain}
+          currentPath={pathname}
+          onNavigate={onNavigate}
+          badges={badges}
+        />
+        <NavSection
+          label="AI"
+          items={navAi}
+          currentPath={pathname}
+          onNavigate={onNavigate}
+          badges={badges}
+        />
+        <NavSection
+          label="Analitika"
+          items={navAnalytics}
+          currentPath={pathname}
+          onNavigate={onNavigate}
+          badges={badges}
+        />
       </nav>
 
       {/* User — link to /profil + logout */}
@@ -112,11 +167,11 @@ export function SidebarContent({ onNavigate }: SidebarContentProps) {
           )}
         >
           <div className="size-8 grid place-items-center rounded-full bg-emerald-600 text-xs font-bold shrink-0">
-            AK
+            {u.initials}
           </div>
           <div className="text-xs min-w-0 flex-1">
-            <div className="font-semibold leading-none truncate">Aziz Karimov</div>
-            <div className="text-white/50 mt-1 truncate">Omborchi</div>
+            <div className="font-semibold leading-none truncate">{u.fullName}</div>
+            <div className="text-white/50 mt-1 truncate">{u.roleLabel}</div>
           </div>
         </Link>
         <Link
@@ -133,10 +188,16 @@ export function SidebarContent({ onNavigate }: SidebarContentProps) {
   );
 }
 
-export function Sidebar() {
+export function Sidebar({
+  user,
+  badges,
+}: {
+  user?: SidebarUser;
+  badges?: SidebarBadges;
+}) {
   return (
     <aside className="hidden lg:flex w-60 shrink-0 flex-col bg-navy-900 text-white">
-      <SidebarContent />
+      <SidebarContent user={user} badges={badges} />
     </aside>
   );
 }

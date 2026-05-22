@@ -17,9 +17,21 @@ import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Dropdown, DropdownItem, DropdownDivider } from "@/components/ui/dropdown";
-import { getSupplierStores } from "@/lib/store";
+import { supplierPortal, ApiError } from "@/lib/api";
 import { formatSom, formatDate, cn } from "@/lib/utils";
 import type { SupplierStore } from "@/lib/types";
+
+interface PageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+function pickString(
+  params: Record<string, string | string[] | undefined>,
+  key: string,
+): string | undefined {
+  const v = params[key];
+  return typeof v === "string" && v.length > 0 ? v : undefined;
+}
 
 const AVATAR_PALETTE = [
   "bg-navy-700",
@@ -248,8 +260,21 @@ function StoreCard({ store }: { store: SupplierStore }) {
   );
 }
 
-export default function SupplierStoresPage() {
-  const stores = getSupplierStores();
+export default async function SupplierStoresPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  let stores: SupplierStore[] = [];
+  let loadError: string | null = null;
+  try {
+    const res = await supplierPortal.stores.list({
+      ordering: pickString(params, "ordering"),
+      status: pickString(params, "status"),
+      region: pickString(params, "region"),
+      search: pickString(params, "q") ?? pickString(params, "search"),
+    });
+    stores = res.results;
+  } catch (e) {
+    loadError = e instanceof ApiError ? e.message : "Do'konlarni yuklab bo'lmadi";
+  }
 
   // KPI calcs
   const total = stores.length;
@@ -282,6 +307,11 @@ export default function SupplierStoresPage() {
 
       <main className="flex-1 overflow-y-auto bg-surface px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-7xl">
+          {loadError && (
+            <Alert variant="error" className="mb-4">
+              {loadError}
+            </Alert>
+          )}
           {/* Header row */}
           <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
             <div>

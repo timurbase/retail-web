@@ -10,10 +10,23 @@ import {
 import { SupplierTopbar } from "@/components/supplier/supplier-topbar";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { getDemandSignals } from "@/lib/store";
+import { supplierPortal, ApiError } from "@/lib/api";
 import { formatNumber, cn } from "@/lib/utils";
 import type { DemandSignal } from "@/lib/types";
+
+interface PageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+function pickString(
+  params: Record<string, string | string[] | undefined>,
+  key: string,
+): string | undefined {
+  const v = params[key];
+  return typeof v === "string" && v.length > 0 ? v : undefined;
+}
 
 // 12 viloyat fixed list — order matches the 4x3 grid
 const VILOYATLAR: { name: string; weeklyVolume: number; trend: number }[] = [
@@ -117,8 +130,20 @@ function SignalCard({ signal, kind }: { signal: DemandSignal; kind: "rise" | "fa
   );
 }
 
-export default function SupplierTalabPage() {
-  const signals = getDemandSignals();
+export default async function SupplierTalabPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  let signals: DemandSignal[] = [];
+  let loadError: string | null = null;
+  try {
+    const res = await supplierPortal.demandSignals.list({
+      region: pickString(params, "region"),
+      hotness: pickString(params, "hotness"),
+      ordering: pickString(params, "ordering") ?? "-trend_percent",
+    });
+    signals = res.results;
+  } catch (e) {
+    loadError = e instanceof ApiError ? e.message : "Talab signallarini yuklab bo'lmadi";
+  }
 
   // KPI calcs
   const sorted = [...signals].sort((a, b) => b.trendPercent - a.trendPercent);
@@ -146,6 +171,11 @@ export default function SupplierTalabPage() {
 
       <main className="flex-1 overflow-y-auto bg-surface px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-7xl">
+          {loadError && (
+            <Alert variant="error" className="mb-4">
+              {loadError}
+            </Alert>
+          )}
           {/* Header */}
           <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
             <div>

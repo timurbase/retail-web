@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import * as store from "../store";
+import { supplierPortal, ApiError } from "@/lib/api";
 import type { PaymentMethod } from "../types";
 import type {
   CreateOutgoingInvoiceInput,
@@ -22,20 +22,43 @@ function revalidate(extra?: string) {
   if (extra) revalidatePath(extra);
 }
 
+function err(e: unknown, fallback: string) {
+  if (e instanceof ApiError) {
+    return { ok: false as const, error: e.message, code: e.code };
+  }
+  return { ok: false as const, error: fallback };
+}
+
 // ============================================================
 // Stores (customer network)
 // ============================================================
 
 export async function inviteStoreAction(input: InviteStoreInput) {
-  const s = store.inviteStore(input);
-  revalidate();
-  return { ok: true, store: s };
+  try {
+    const s = await supplierPortal.stores.create({
+      stir: input.stir,
+      phone: input.phone,
+      name: input.name,
+      region: input.region,
+      district: input.district,
+      director: input.director,
+      creditLimit: input.creditLimit,
+    });
+    revalidate();
+    return { ok: true as const, store: s };
+  } catch (e) {
+    return err(e, "Do'kon taklif qilinmadi");
+  }
 }
 
 export async function updateCreditLimitAction(id: string, limit: number) {
-  const s = store.updateStoreCreditLimit(id, limit);
-  revalidate(`/supplier/do-konlar/${id}`);
-  return { ok: !!s, store: s };
+  try {
+    const s = await supplierPortal.stores.updateCreditLimit(id, limit);
+    revalidate(`/supplier/do-konlar/${id}`);
+    return { ok: true as const, store: s };
+  } catch (e) {
+    return err(e, "Kredit limiti o'zgartirilmadi");
+  }
 }
 
 // ============================================================
@@ -43,27 +66,66 @@ export async function updateCreditLimitAction(id: string, limit: number) {
 // ============================================================
 
 export async function createInvoiceAction(input: CreateOutgoingInvoiceInput) {
-  const inv = store.createOutgoingInvoice(input);
-  revalidate(inv ? `/supplier/hujjatlar/${inv.id}` : undefined);
-  return { ok: !!inv, invoice: inv };
+  try {
+    const inv = await supplierPortal.invoices.create({
+      storeId: input.storeId,
+      items: input.items,
+      dueDate: input.dueDate,
+      trackingNote: input.trackingNote,
+    });
+    revalidate(`/supplier/hujjatlar/${inv.id}`);
+    return { ok: true as const, invoice: inv };
+  } catch (e) {
+    return err(e, "Hujjat yaratilmadi");
+  }
 }
 
 export async function markInvoiceDeliveredAction(id: string) {
-  const ok = store.markInvoiceDelivered(id);
-  revalidate(`/supplier/hujjatlar/${id}`);
-  return { ok };
+  try {
+    await supplierPortal.invoices.markDelivered(id);
+    revalidate(`/supplier/hujjatlar/${id}`);
+    return { ok: true as const };
+  } catch (e) {
+    return err(e, "Yetkazib berish belgilanmadi");
+  }
 }
 
 export async function markInvoicePaidAction(id: string, method: PaymentMethod) {
-  const ok = store.markInvoicePaid(id, method);
-  revalidate(`/supplier/hujjatlar/${id}`);
-  return { ok };
+  try {
+    await supplierPortal.invoices.markPaid(id, method);
+    revalidate(`/supplier/hujjatlar/${id}`);
+    return { ok: true as const };
+  } catch (e) {
+    return err(e, "To'lov belgilanmadi");
+  }
 }
 
-export async function bulkSendInvoicesAction(invoices: CreateOutgoingInvoiceInput[]) {
-  const result = store.bulkSendInvoices(invoices);
+export async function bulkSendInvoicesAction(
+  inputs: CreateOutgoingInvoiceInput[],
+) {
+  let count = 0;
+  const failures: string[] = [];
+  for (const input of inputs) {
+    try {
+      await supplierPortal.invoices.create({
+        storeId: input.storeId,
+        items: input.items,
+        dueDate: input.dueDate,
+        trackingNote: input.trackingNote,
+      });
+      count++;
+    } catch (e) {
+      if (e instanceof ApiError) failures.push(e.message);
+      else failures.push("Noma'lum xato");
+    }
+  }
   revalidate();
-  return result;
+  return {
+    ok: failures.length === 0,
+    count,
+    total: inputs.length,
+    failures,
+  };
 }
 
 // ============================================================
@@ -71,13 +133,21 @@ export async function bulkSendInvoicesAction(invoices: CreateOutgoingInvoiceInpu
 // ============================================================
 
 export async function acceptOrderAction(id: string) {
-  const ok = store.acceptIncomingOrder(id);
-  revalidate(`/supplier/buyurtmalar/${id}`);
-  return { ok };
+  try {
+    await supplierPortal.orders.accept(id);
+    revalidate(`/supplier/buyurtmalar/${id}`);
+    return { ok: true as const };
+  } catch (e) {
+    return err(e, "Buyurtma qabul qilinmadi");
+  }
 }
 
 export async function rejectOrderAction(id: string, reason: string) {
-  const ok = store.rejectIncomingOrder(id, reason);
-  revalidate(`/supplier/buyurtmalar/${id}`);
-  return { ok };
+  try {
+    await supplierPortal.orders.reject(id, reason);
+    revalidate(`/supplier/buyurtmalar/${id}`);
+    return { ok: true as const };
+  } catch (e) {
+    return err(e, "Buyurtma rad etilmadi");
+  }
 }

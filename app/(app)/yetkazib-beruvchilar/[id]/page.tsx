@@ -22,10 +22,11 @@ import {
 } from "@/components/ui/dropdown";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import {
-  getSupplier,
-  getDocuments,
-  getProducts,
-} from "@/lib/store";
+  suppliers as suppliersApi,
+  documents as documentsApi,
+  products as productsApi,
+  ApiError,
+} from "@/lib/api";
 import {
   formatSom,
   formatDate,
@@ -80,14 +81,30 @@ const statusLabels: Record<string, string> = {
 
 export default async function SupplierDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const supplier = getSupplier(id);
+  let supplier: Awaited<ReturnType<typeof suppliersApi.get>>;
+  try {
+    supplier = await suppliersApi.get(id);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
   if (!supplier) notFound();
 
   const rng = seedFrom(supplier.id);
 
   // Real docs from this supplier
-  const allDocs = getDocuments();
-  const realDocs = allDocs.filter((d) => d.supplier.id === supplier.id);
+  let realDocs: Awaited<ReturnType<typeof documentsApi.list>>["results"] = [];
+  let allProducts: Awaited<ReturnType<typeof productsApi.list>>["results"] = [];
+  try {
+    const [docsRes, prodRes] = await Promise.all([
+      documentsApi.list({ supplier: id }),
+      productsApi.list({ limit: 8 }),
+    ]);
+    realDocs = docsRes.results;
+    allProducts = prodRes.results;
+  } catch {
+    // Non-fatal: detail page still renders supplier info; secondary widgets degrade.
+  }
 
   // KPIs
   const totalDocsCount = realDocs.length + 38 + Math.floor(rng() * 25);
@@ -124,13 +141,16 @@ export default async function SupplierDetailPage({ params }: PageProps) {
   ].slice(0, 10);
 
   // Top products from this supplier — pick 8 from catalog deterministically
-  const allProducts = getProducts();
-  const topProducts = Array.from({ length: 8 }, (_, i) => {
-    const product = allProducts[i % allProducts.length];
-    const count = Math.round(180 - i * 18 - rng() * 12);
-    return { product, count };
-  });
-  const maxProductCount = Math.max(...topProducts.map((t) => t.count));
+  const topProducts = allProducts.length === 0
+    ? []
+    : Array.from({ length: 8 }, (_, i) => {
+        const product = allProducts[i % allProducts.length];
+        const count = Math.round(180 - i * 18 - rng() * 12);
+        return { product, count };
+      });
+  const maxProductCount = topProducts.length
+    ? Math.max(...topProducts.map((t) => t.count))
+    : 1;
 
   // Confidence trend (30-day, dots+line)
   const trendPoints = Array.from({ length: 30 }, (_, i) => {

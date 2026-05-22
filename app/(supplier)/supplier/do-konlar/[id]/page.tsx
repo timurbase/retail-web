@@ -20,12 +20,13 @@ import {
   DropdownItem,
 } from "@/components/ui/dropdown";
 import { KpiCard } from "@/components/dashboard/kpi-card";
-import {
-  getSupplierStore,
-  getOutgoingInvoices,
-  getSupplierProduct,
-} from "@/lib/store";
-import type { OutgoingInvoiceStatus } from "@/lib/types";
+import { supplierPortal, ApiError } from "@/lib/api";
+import type {
+  OutgoingInvoiceStatus,
+  SupplierStore,
+  OutgoingInvoice,
+  SupplierProduct,
+} from "@/lib/types";
 import { formatSom, formatDate, formatNumber, cn } from "@/lib/utils";
 
 interface PageProps {
@@ -119,14 +120,26 @@ const TASHKENT_STREETS = [
 
 export default async function StoreDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const supStore = getSupplierStore(id);
-  if (!supStore) notFound();
+  let supStore: SupplierStore;
+  let storeInvoices: OutgoingInvoice[] = [];
+  let products: SupplierProduct[] = [];
+  try {
+    const [storeRes, invoicesRes, productsRes] = await Promise.all([
+      supplierPortal.stores.get(id),
+      supplierPortal.invoices.list({ store: id, limit: 8 }),
+      supplierPortal.products.list({ limit: 12 }),
+    ]);
+    supStore = storeRes;
+    storeInvoices = invoicesRes.results;
+    products = productsRes.results;
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
 
   const rng = seedFrom(supStore.id);
-  const allInvoices = getOutgoingInvoices();
+  const productById = new Map(products.map((p) => [p.id, p]));
 
-  // Real invoices for this store
-  const storeInvoices = allInvoices.filter((inv) => inv.storeId === supStore.id);
   const recentInvoices = storeInvoices.slice(0, 8);
 
   // KPI: bu oy buyurtma (count invoices last 30 days)
@@ -156,7 +169,7 @@ export default async function StoreDetailPage({ params }: PageProps) {
     .sort((a, b) => b[1].count - a[1].count)
     .slice(0, 6)
     .map(([pid, v]) => {
-      const p = getSupplierProduct(pid);
+      const p = productById.get(pid);
       return {
         productId: pid,
         name: v.name,

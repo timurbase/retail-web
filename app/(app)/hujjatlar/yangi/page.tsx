@@ -1,9 +1,17 @@
 import { Topbar } from "@/components/layout/topbar";
+import { Alert } from "@/components/ui/alert";
 import { NewDocForm } from "@/components/document/new-doc-form";
-import { getSuppliers } from "@/lib/store";
+import { suppliers as suppliersApi, ApiError } from "@/lib/api";
 
 export default async function NewDocumentPage() {
-  const suppliers = getSuppliers();
+  let suppliers: Awaited<ReturnType<typeof suppliersApi.list>>["results"] = [];
+  let loadError: string | null = null;
+  try {
+    const res = await suppliersApi.list();
+    suppliers = res.results;
+  } catch (e) {
+    loadError = e instanceof ApiError ? e.message : "Noma'lum xato";
+  }
 
   return (
     <>
@@ -27,6 +35,12 @@ export default async function NewDocumentPage() {
               Qog&apos;oz nakladnoy yoki foto orqali kirim qo&apos;shing — Didox webhook kelmagan paytda qo&apos;l keladi.
             </p>
           </div>
+
+          {loadError && (
+            <Alert variant="error" className="mb-4">
+              Yuklashda xatolik: {loadError}
+            </Alert>
+          )}
 
           <NewDocForm suppliers={suppliers} />
         </div>

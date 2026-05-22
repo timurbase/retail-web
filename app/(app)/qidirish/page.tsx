@@ -1,6 +1,12 @@
 import { Topbar } from "@/components/layout/topbar";
 import { Card } from "@/components/ui/card";
-import { getDocuments, getProducts, getSuppliers, getUsers } from "@/lib/store";
+import {
+  documents as documentsApi,
+  products as productsApi,
+  suppliers as suppliersApi,
+  users as usersApi,
+  ApiError,
+} from "@/lib/api";
 import { formatSom, formatDate } from "@/lib/utils";
 import Link from "next/link";
 import {
@@ -171,25 +177,38 @@ export default async function SearchPage({ searchParams }: PageProps) {
     );
   }
 
-  // Aggregate matches.
-  const documents = getDocuments().filter(
-    (d) => matches(d.number, needle) || matches(d.supplier.name, needle)
-  );
-
-  const products = getProducts().filter(
-    (p) => matches(p.name, needle) || matches(p.mxik, needle)
-  );
-
-  const suppliers = getSuppliers().filter(
-    (s) => matches(s.name, needle) || matches(s.stir, needle)
-  );
-
-  const users = getUsers().filter(
-    (u) =>
-      matches(u.fullName, needle) ||
-      matches(u.email, needle) ||
-      matches(u.phone, needle)
-  );
+  // Aggregate matches — backend filters by `search` param, then we keep
+  // client-side narrowing as safety net.
+  let documents: Awaited<ReturnType<typeof documentsApi.list>>["results"] = [];
+  let products: Awaited<ReturnType<typeof productsApi.list>>["results"] = [];
+  let suppliers: Awaited<ReturnType<typeof suppliersApi.list>>["results"] = [];
+  let users: Awaited<ReturnType<typeof usersApi.list>>["results"] = [];
+  try {
+    const [docsRes, prodsRes, supsRes, usersRes] = await Promise.all([
+      documentsApi.list({ search: query }),
+      productsApi.list({ search: query }),
+      suppliersApi.list({ search: query }),
+      usersApi.list().catch(() => ({ count: 0, results: [] as typeof users })),
+    ]);
+    documents = docsRes.results.filter(
+      (d) => matches(d.number, needle) || matches(d.supplier.name, needle)
+    );
+    products = prodsRes.results.filter(
+      (p) => matches(p.name, needle) || matches(p.mxik, needle)
+    );
+    suppliers = supsRes.results.filter(
+      (s) => matches(s.name, needle) || matches(s.stir, needle)
+    );
+    users = usersRes.results.filter(
+      (u) =>
+        matches(u.fullName, needle) ||
+        matches(u.email, needle) ||
+        matches(u.phone, needle)
+    );
+  } catch (e) {
+    if (!(e instanceof ApiError)) throw e;
+    // Soft-fail: results stay empty, EmptyResults will render.
+  }
 
   const pages = PAGES.filter(
     (p) =>

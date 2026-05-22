@@ -5,7 +5,7 @@ import { ArrowLeft, Lock } from "lucide-react";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
-import { getAuditLog } from "@/lib/store";
+import { audit as auditApi, ApiError } from "@/lib/api";
 import type { AuditAction, AuditEntry } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -113,7 +113,14 @@ function formatTimestamp(iso: string): string {
 
 export default async function AuditEntryDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const all = getAuditLog(500);
+  let all: AuditEntry[] = [];
+  try {
+    const res = await auditApi.list({ limit: 500 });
+    all = res.results;
+  } catch (e) {
+    if (!(e instanceof ApiError)) throw e;
+    notFound();
+  }
   const entry = all.find((e) => e.id === id);
   if (!entry) notFound();
 

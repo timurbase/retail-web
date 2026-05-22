@@ -1,5 +1,9 @@
 "use server";
 
+// TODO(backend): integrations live as a static UI config — no DB row yet.
+// Audit entries are written via the in-memory store. Replace with a real
+// /api/integrations/audit/ endpoint when integrations become first-class.
+
 import { revalidatePath } from "next/cache";
 import * as store from "../store";
 import type { AuditAction } from "../types";

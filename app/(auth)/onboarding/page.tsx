@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, useTransition, type FormEvent } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -32,6 +32,7 @@ import { Card } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
+import { inviteTeamAction } from "@/lib/actions/auth";
 
 // ===================== TYPES =====================
 
@@ -147,6 +148,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState<Step>(1);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [hydrated, setHydrated] = useState(false);
+  const [inviting, startInviting] = useTransition();
 
   // Load from localStorage
   useEffect(() => {
@@ -299,12 +301,53 @@ export default function OnboardingPage() {
           {step === 4 && (
             <Step4Team
               invites={form.invites}
+              inviting={inviting}
               onAdd={addInvite}
               onRemove={removeInvite}
               onUpdate={updateInvite}
               onContinue={(e) => {
                 e.preventDefault();
-                goNext();
+                const cleaned = form.invites
+                  .filter((row) => row.email.trim().length > 0)
+                  .map((row) => ({
+                    // Form field is `email`; backend takes `phone`. If the
+                    // value looks like a phone (mostly digits), use it as the
+                    // phone, else pass it through as email and let the server
+                    // action's normaliser try to coerce it.
+                    phone: /^[+\d\s\-()]+$/.test(row.email) ? row.email : "",
+                    email: /^[+\d\s\-()]+$/.test(row.email) ? undefined : row.email,
+                    role: row.role,
+                  }))
+                  .filter((r) => r.phone || r.email);
+                if (cleaned.length === 0) {
+                  goNext();
+                  return;
+                }
+                startInviting(async () => {
+                  const res = await inviteTeamAction(
+                    cleaned.map((r) => ({
+                      phone: r.phone || "",
+                      email: r.email,
+                      role: r.role,
+                    })),
+                  );
+                  if (!res.ok) {
+                    toast.error("Takliflarni yuborib bo'lmadi", res.error);
+                    return;
+                  }
+                  if (res.failed.length > 0) {
+                    toast.warning(
+                      `${res.succeeded} ta yuborildi, ${res.failed.length} ta xato`,
+                      res.failed.map((f) => `${f.phone}: ${f.error}`).join("\n"),
+                    );
+                  } else if (res.succeeded > 0) {
+                    toast.success(
+                      `${res.succeeded} ta taklif yuborildi`,
+                      "A'zolar SMS orqali bog'lanish kodi oladi.",
+                    );
+                  }
+                  goNext();
+                });
               }}
               onBack={goBack}
               onSkip={goNext}
@@ -732,6 +775,7 @@ function Step3Integrations({
 
 function Step4Team({
   invites,
+  inviting,
   onAdd,
   onRemove,
   onUpdate,
@@ -740,6 +784,7 @@ function Step4Team({
   onSkip,
 }: {
   invites: InviteRow[];
+  inviting: boolean;
   onAdd: () => void;
   onRemove: (idx: number) => void;
   onUpdate: (idx: number, patch: Partial<InviteRow>) => void;
@@ -852,9 +897,14 @@ function Step4Team({
         >
           Hozircha o&apos;tkazib yuborish
         </Button>
-        <Button type="submit" variant="primary" className="h-11 px-6 text-[15px]">
+        <Button
+          type="submit"
+          variant="primary"
+          className="h-11 px-6 text-[15px]"
+          disabled={inviting}
+        >
           <Send className="size-4" />
-          Davom etish
+          {inviting ? "Yuborilmoqda…" : "Davom etish"}
         </Button>
       </div>
     </form>

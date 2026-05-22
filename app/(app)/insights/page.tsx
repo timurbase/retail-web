@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { mockWeeklyTrends } from "@/lib/mock-data";
+// TODO(backend): insights endpoint not yet available, using mock store getter
 import { getInsights } from "@/lib/store";
 import { formatNumber, cn } from "@/lib/utils";
 import { InsightsView } from "@/components/insights/insights-view";

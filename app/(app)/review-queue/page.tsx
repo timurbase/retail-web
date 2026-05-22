@@ -1,17 +1,26 @@
 import { Topbar } from "@/components/layout/topbar";
+import { Alert } from "@/components/ui/alert";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { ReviewQueueView } from "@/components/review-queue/review-queue-view";
-import { getDocuments } from "@/lib/store";
+import { documents as documentsApi, ApiError } from "@/lib/api";
 
-export default function ReviewQueuePage() {
-  const documents = getDocuments();
+export default async function ReviewQueuePage() {
+  let documents: Awaited<ReturnType<typeof documentsApi.list>>["results"] = [];
+  let loadError: string | null = null;
+
+  try {
+    const res = await documentsApi.list({ status: "review" });
+    documents = res.results;
+  } catch (e) {
+    loadError = e instanceof ApiError ? e.message : "Noma'lum xato";
+  }
 
   // Count for KPIs (server-side, before passing to client)
   let total = 0;
   let newCount = 0;
   let ambiguousCount = 0;
   for (const doc of documents) {
-    for (const row of doc.rows) {
+    for (const row of doc.rows ?? []) {
       if (row.status === "new") {
         total++;
         newCount++;
@@ -53,6 +62,12 @@ export default function ReviewQueuePage() {
               skip
             </div>
           </div>
+
+          {loadError && (
+            <Alert variant="error" className="mb-4">
+              Yuklashda xatolik: {loadError}
+            </Alert>
+          )}
 
           {/* KPIs */}
           <div className="mb-6 grid grid-cols-3 gap-4">

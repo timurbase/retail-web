@@ -2,7 +2,20 @@ import { SupplierTopbar } from "@/components/supplier/supplier-topbar";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Alert } from "@/components/ui/alert";
 import { OrderCard } from "@/components/supplier/order-card";
-import { getIncomingOrders } from "@/lib/store";
+import { supplierPortal, ApiError } from "@/lib/api";
+import type { IncomingOrder } from "@/lib/types";
+
+interface PageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+function pickString(
+  params: Record<string, string | string[] | undefined>,
+  key: string,
+): string | undefined {
+  const v = params[key];
+  return typeof v === "string" && v.length > 0 ? v : undefined;
+}
 
 // Fixed reference now
 const NOW_ISO = "2026-05-21T10:00:00Z";
@@ -15,8 +28,19 @@ const STATUS_ORDER: Record<string, number> = {
   rejected: 3,
 };
 
-export default function SupplierBuyurtmalarPage() {
-  const orders = getIncomingOrders();
+export default async function SupplierBuyurtmalarPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  let orders: IncomingOrder[] = [];
+  let loadError: string | null = null;
+  try {
+    const res = await supplierPortal.orders.list({
+      status: pickString(params, "status"),
+      search: pickString(params, "q") ?? pickString(params, "search"),
+    });
+    orders = res.results;
+  } catch (e) {
+    loadError = e instanceof ApiError ? e.message : "Buyurtmalarni yuklab bo'lmadi";
+  }
 
   const pending = orders.filter((o) => o.status === "pending");
   const accepted = orders.filter((o) => o.status === "accepted");
@@ -61,6 +85,11 @@ export default function SupplierBuyurtmalarPage() {
 
       <main className="flex-1 overflow-y-auto bg-surface px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-7xl">
+          {loadError && (
+            <Alert variant="error" className="mb-4">
+              {loadError}
+            </Alert>
+          )}
           {/* Header */}
           <div className="mb-6">
             <h1 className="text-2xl font-bold tracking-tight text-ink-900">
