@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { logoutAction } from "@/lib/actions/auth";
 import {
   supplierNavMain,
   supplierNavSales,
@@ -186,15 +187,16 @@ export function SupplierSidebarContent({
             <div className="text-white/50 mt-1 truncate">{u.roleLabel}</div>
           </div>
         </Link>
-        <Link
-          href="/login"
-          onClick={onNavigate}
-          aria-label="Chiqish"
-          title="Chiqish"
-          className="grid w-9 shrink-0 place-items-center rounded-md bg-white/5 text-white/60 transition-colors hover:bg-red-600/20 hover:text-red-300"
-        >
-          <LogOut className="size-4" />
-        </Link>
+        <form action={logoutAction} className="contents">
+          <button
+            type="submit"
+            aria-label="Chiqish"
+            title="Chiqish"
+            className="grid w-9 shrink-0 place-items-center rounded-md bg-white/5 text-white/60 transition-colors hover:bg-red-600/20 hover:text-red-300"
+          >
+            <LogOut className="size-4" />
+          </button>
+        </form>
       </div>
     </>
   );
