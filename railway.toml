@@ -7,9 +7,6 @@
 # Optional:
 #   PORT                      (Railway sets it)
 
-[build]
-builder = "nixpacks"
-
 [deploy]
 # next start reads PORT from env automatically — no shell expansion needed.
 startCommand = "bun run start"
